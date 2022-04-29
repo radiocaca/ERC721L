@@ -74,8 +74,6 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      * @dev See {IERC721Lockable-isLocked}.
      */
     function isLocked(uint256 tokenId) public view virtual override returns (bool) {
-        require(_exists(tokenId), "ERC721L: locked query for nonexistent token");
-
         return lockedTokens[tokenId] > block.timestamp;
     }
 

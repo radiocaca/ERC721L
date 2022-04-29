@@ -118,9 +118,6 @@ interface IERC721Lockable is IERC165 {
 
     /**
      * @dev Returns if the `tokenId` token is locked.
-     * Requirements:
-     *
-     * - `tokenId` must exist.
      */
     function isLocked(uint256 tokenId) external view returns (bool);
 }
