@@ -174,12 +174,12 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
     ) internal virtual {
         require(expired > block.timestamp, "ERC721L: lock mint for invalid lock time");
 
+        _safeMint(to, tokenId, _data);
+
         lockedTokens[tokenId] = expired;
         _lockApprovals[tokenId] = _msgSender();
 
         emit Locked(_msgSender(), to, tokenId, expired);
-
-        _safeMint(to, tokenId, _data);
     }
 
     /**
