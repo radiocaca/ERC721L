@@ -3,10 +3,10 @@
 - AccessControl
 - Burnable
 - Pausable
+- Lockable
 - NFT Royalty Standard (ERC2981)
 - Redeemer: Allows holders of ERC721 tokens to redeem rights to some claim; for
   example, the right to mint a token of some other collection.
-- Transfer Locks
 - Multiple tokenURI management
 - Tokens withdrawal within the contract
 - Bound NFT (TODO)

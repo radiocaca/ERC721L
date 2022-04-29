@@ -1,5 +1,5 @@
 {
-  "name": "raca-contracts",
+  "name": "ERC721Lockable",
   "scripts": {
     "node": "hardhat node",
     "test": "hardhat test",
