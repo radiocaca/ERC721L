@@ -1,4 +1,5 @@
 {
+  "license": "GPL-3.0",
   "name": "ERC721Lockable",
   "scripts": {
     "node": "hardhat node",
