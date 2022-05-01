@@ -32,8 +32,12 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
 
     string public baseTokenURI;
 
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {
-        preimage = msg.sender;
+    constructor(
+        address preimage_,
+        string memory name_,
+        string memory symbol_
+    ) ERC721(name_, symbol_) {
+        preimage = preimage_;
     }
 
     /**

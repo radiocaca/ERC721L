@@ -47,7 +47,11 @@ contract EIP5058Factory {
         bytes memory code = type(ERC721Bound).creationCode;
         bytes memory bytecode = abi.encodePacked(
             code,
-            abi.encode(abi.encodePacked(prefix, " ", collection.name()), abi.encodePacked(prefix, collection.symbol()))
+            abi.encode(
+                preimage,
+                abi.encodePacked(prefix, " ", collection.name()),
+                abi.encodePacked(prefix, collection.symbol())
+            )
         );
 
         address addr;
