@@ -59,12 +59,19 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
     /**
      * @dev See {IPreimage-contractURI}.
      */
-    function contractURI() external view returns (string memory) {
+    function contractURI() public view returns (string memory) {
         if (IERC165(preimage).supportsInterface(IPreimage.contractURI.selector)) {
             return IPreimage(preimage).contractURI();
         }
 
         return _contractURI;
+    }
+
+    /**
+     * @dev Returns whether `tokenId` exists.
+     */
+    function exists(uint256 tokenId) public view returns (bool) {
+        return _exists(tokenId);
     }
 
     // @dev Sets the contract URI.
@@ -108,10 +115,6 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
 
     /**
      * @dev See {ERC721-_beforeTokenTransfer}.
-     *
-     * Requirements:
-     *
-     * - the `tokenId` of preimage must be locked.
      */
     function _beforeTokenTransfer(
         address from,
@@ -120,7 +123,11 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
     ) internal virtual override {
         super._beforeTokenTransfer(from, to, tokenId);
 
-        require(IPreimage(preimage).isLocked(tokenId), "ERC721Bound: token transfer while preimage not locked");
+        if (to != address(0)) {
+            require(IPreimage(preimage).isLocked(tokenId), "ERC721Bound: token transfer while preimage not locked");
+        } else {
+            require(!IPreimage(preimage).isLocked(tokenId), "ERC721Bound: token burn while preimage locked");
+        }
     }
 
     /**

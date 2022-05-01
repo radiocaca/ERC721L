@@ -87,11 +87,8 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
     ) public virtual override {
         //solhint-disable-next-line max-line-length
         require(_isLockApprovedOrOwner(_msgSender(), tokenId), "ERC721L: lock caller is not owner nor approved");
-        require(expired > block.timestamp && expired > lockedTokens[tokenId], "ERC721L: invalid lock time");
-
-        if (isLocked(tokenId)) {
-            require(getLockApproved(tokenId) == _msgSender(), "ERC721L: lock caller is not occupied operator");
-        }
+        require(expired > block.timestamp, "ERC721L: expired time must be greater than current block time");
+        require(!isLocked(tokenId), "ERC721L: token is locked");
 
         _lock(from, tokenId, expired);
     }
@@ -99,18 +96,16 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
     /**
      * @dev See {IERC721Lockable-unlockFrom}.
      */
-    function unlockFrom(
-        address from,
-        uint256 tokenId,
-        uint256 expired
-    ) public virtual override {
+    function unlockFrom(address from, uint256 tokenId) public virtual override {
         require(
             isLocked(tokenId) && getLockApproved(tokenId) == _msgSender(),
-            "ERC721L: unlock caller is not occupied operator"
+            "ERC721L: unlock caller is not lock operator"
         );
-        require(expired < lockedTokens[tokenId], "ERC721L: invalid unlock time");
+        require(ERC721.ownerOf(tokenId) == from, "ERC721L: unlock from incorrect owner");
 
-        _lock(from, tokenId, expired);
+        delete lockedTokens[tokenId];
+
+        emit Unlocked(_msgSender(), from, tokenId);
     }
 
     /**
@@ -129,30 +124,8 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
     ) internal virtual {
         require(ERC721.ownerOf(tokenId) == from, "ERC721L: lock from incorrect owner");
 
-        if (_lockApprovals[tokenId] != _msgSender()) {
-            _lockApprovals[tokenId] = _msgSender();
-        }
-
         lockedTokens[tokenId] = expired;
-
-        /*if (duration == 0) {
-            lockedTokens[tokenId] = type(uint256).max;
-        } else {
-            unchecked {
-                uint256 a = lockedTokens[tokenId];
-                if (a == 0) {
-                    uint256 b = duration + block.timestamp;
-                    if (b < block.timestamp) revert("ERC721L: lock time overflow");
-
-                    lockedTokens[tokenId] = b;
-                } else {
-                    uint256 c = a + duration;
-                    if (c < a) revert("ERC721L: lock time overflow");
-
-                    lockedTokens[tokenId] = c;
-                }
-            }
-        }*/
+        _lockApprovals[tokenId] = _msgSender();
 
         emit Locked(_msgSender(), from, tokenId, expired);
     }

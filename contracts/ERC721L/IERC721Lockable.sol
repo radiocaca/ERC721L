@@ -21,6 +21,11 @@ interface IERC721Lockable is IERC165 {
     event Locked(address indexed operator, address indexed from, uint256 indexed tokenId, uint256 expired);
 
     /**
+     * @dev Emitted when `tokenId` token is unlocked from `from`.
+     */
+    event Unlocked(address indexed operator, address indexed from, uint256 indexed tokenId);
+
+    /**
      * @dev Emitted when `owner` enables `approved` to lock the `tokenId` token.
      */
     event LockApproval(address indexed owner, address indexed approved, uint256 indexed tokenId);
@@ -65,16 +70,11 @@ interface IERC721Lockable is IERC165 {
      *
      * - `from` cannot be the zero address.
      * - `tokenId` token must be owned by `from`.
-     * - `expired` must be less than the current expiration time.
      * - the caller must be the operator who locks the token by {lockFrom}
      *
-     * Emits a {Locked} event.
+     * Emits a {Unlocked} event.
      */
-    function unlockFrom(
-        address from,
-        uint256 tokenId,
-        uint256 expired
-    ) external;
+    function unlockFrom(address from, uint256 tokenId) external;
 
     /**
      * @dev Gives permission to `to` to lock `tokenId` token.
