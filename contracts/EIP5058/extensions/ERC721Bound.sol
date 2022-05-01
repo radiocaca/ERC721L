@@ -30,6 +30,8 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
 
     string private _contractURI;
 
+    string public baseTokenURI;
+
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {
         preimage = msg.sender;
     }
@@ -43,9 +45,20 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
     }
 
     /**
+     * @dev See {ERC721-_baseURI}.
+     */
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseTokenURI;
+    }
+
+    /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        if (bytes(baseTokenURI).length > 0) {
+            return super.tokenURI(tokenId);
+        }
+
         return IERC721Metadata(preimage).tokenURI(tokenId);
     }
 
@@ -60,11 +73,15 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
      * @dev See {IPreimage-contractURI}.
      */
     function contractURI() public view returns (string memory) {
+        if (bytes(_contractURI).length > 0) {
+            return _contractURI;
+        }
+
         if (IERC165(preimage).supportsInterface(IPreimage.contractURI.selector)) {
             return IPreimage(preimage).contractURI();
         }
 
-        return _contractURI;
+        return "";
     }
 
     /**
@@ -72,6 +89,11 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
      */
     function exists(uint256 tokenId) public view returns (bool) {
         return _exists(tokenId);
+    }
+
+    // @dev Sets the base token URI prefix.
+    function setBaseTokenURI(string memory _baseTokenURI) external onlyPreimage {
+        baseTokenURI = _baseTokenURI;
     }
 
     // @dev Sets the contract URI.

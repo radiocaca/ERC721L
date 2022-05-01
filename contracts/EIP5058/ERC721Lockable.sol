@@ -90,22 +90,27 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         require(expired > block.timestamp, "ERC721L: expired time must be greater than current block time");
         require(!isLocked(tokenId), "ERC721L: token is locked");
 
+        _beforeTokenLock(from, tokenId, expired);
+
         _lock(from, tokenId, expired);
+
+        _afterTokenLock(from, tokenId, expired);
     }
 
     /**
      * @dev See {IERC721Lockable-unlockFrom}.
      */
     function unlockFrom(address from, uint256 tokenId) public virtual override {
-        require(
-            isLocked(tokenId) && getLockApproved(tokenId) == _msgSender(),
-            "ERC721L: unlock caller is not lock operator"
-        );
+        require(lockerOf(tokenId) == _msgSender(), "ERC721L: unlock caller is not lock operator");
         require(ERC721.ownerOf(tokenId) == from, "ERC721L: unlock from incorrect owner");
+
+        _beforeTokenLock(from, tokenId, 0);
 
         delete lockedTokens[tokenId];
 
         emit Unlocked(_msgSender(), from, tokenId);
+
+        _afterTokenLock(from, tokenId, 0);
     }
 
     /**
@@ -224,6 +229,38 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
 
         require(!isLocked(tokenId), "ERC721L: token transfer while locked");
     }
+
+    /**
+     * @dev Hook that is called before any token lock/unlock.
+     *
+     * Calling conditions:
+     *
+     * - `from` is non-zero.
+     * - When `expired` is zero, `tokenId` will be unlock for `from`.
+     * - When `expired` is non-zero, ``from``'s `tokenId` will be locked.
+     *
+     */
+    function _beforeTokenLock(
+        address from,
+        uint256 tokenId,
+        uint256 expired
+    ) internal virtual {}
+
+    /**
+     * @dev Hook that is called after any lock/unlock of tokens.
+     *
+     * Calling conditions:
+     *
+     * - `from` is non-zero.
+     * - When `expired` is zero, `tokenId` will be unlock for `from`.
+     * - When `expired` is non-zero, ``from``'s `tokenId` will be locked.
+     *
+     */
+    function _afterTokenLock(
+        address from,
+        uint256 tokenId,
+        uint256 expired
+    ) internal virtual {}
 
     /**
      * @dev See {IERC165-supportsInterface}.
