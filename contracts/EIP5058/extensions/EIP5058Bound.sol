@@ -3,46 +3,29 @@
 
 pragma solidity ^0.8.8;
 
-import "./ERC721Bound.sol";
+import "./IEIP5058Factory.sol";
+import "./IERC721Bound.sol";
 import "../ERC721Lockable.sol";
 
 abstract contract EIP5058Bound is ERC721Lockable {
-    address public bound;
+    address public immutable factory;
 
-    event DeployedBound(address addr, bytes32 salt);
-
-    function boundDeploy() public virtual {
-        require(bound == address(0), "EIP5058Bound: bound nft is already deployed");
-
-        bytes memory code = type(ERC721Bound).creationCode;
-        bytes memory bytecode = abi.encodePacked(
-            code,
-            abi.encode(abi.encodePacked("Bound ", name()), abi.encodePacked("bound", symbol()))
-        );
-
-        _deploy(bytecode, keccak256(abi.encode(this)));
-    }
-
-    function _deploy(bytes memory bytecode, bytes32 salt) internal {
-        address addr;
-        assembly {
-            addr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
-        }
-
-        bound = addr;
-        emit DeployedBound(addr, salt);
+    constructor(address _factory) {
+        factory = _factory;
     }
 
     function _setBoundBaseTokenURI(string memory uri) internal {
+        address bound = IEIP5058Factory(factory).getBound(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
 
-        ERC721Bound(bound).setBaseTokenURI(uri);
+        IERC721Bound(bound).setBaseTokenURI(uri);
     }
 
     function _setBoundContractURI(string memory uri) internal {
+        address bound = IEIP5058Factory(factory).getBound(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
 
-        ERC721Bound(bound).setContractURI(uri);
+        IERC721Bound(bound).setContractURI(uri);
     }
 
     function _beforeTokenLock(
@@ -52,11 +35,12 @@ abstract contract EIP5058Bound is ERC721Lockable {
     ) internal virtual override {
         super._beforeTokenLock(from, tokenId, expired);
 
+        address bound = IEIP5058Factory(factory).getBound(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
         if (expired == 0) {
-            ERC721Bound(bound).safeMint(msg.sender, tokenId, "");
+            IERC721Bound(bound).safeMint(msg.sender, tokenId, "");
         } else {
-            ERC721Bound(bound).burn(tokenId);
+            IERC721Bound(bound).burn(tokenId);
         }
     }
 }

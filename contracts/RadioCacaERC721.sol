@@ -35,8 +35,14 @@ contract RadioCacaERC721 is
         string memory name,
         string memory symbol,
         address payable royaltyReceiver,
-        address redeemProof
-    ) ERC721(name, symbol) BaseTokenURI("") ERC721Redeemable(IERC721(redeemProof), 2000, 2) {
+        address redeemProof,
+        address mutantFactory
+    )
+        ERC721(name, symbol)
+        BaseTokenURI("")
+        EIP5058Bound(mutantFactory)
+        ERC721Redeemable(IERC721(redeemProof), 2000, 2)
+    {
         _setDefaultRoyalty(royaltyReceiver, 500);
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
