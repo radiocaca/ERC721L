@@ -1,5 +1,7 @@
 # RadioCaca NFT Protocol
 
+Implement: [EIP-5058](https://github.com/ethereum/EIPs/pull/5058/files)
+
 - AccessControl
 - Burnable
 - Pausable
@@ -8,6 +10,7 @@
 - Redeemer: Allows holders of ERC721 tokens to redeem rights to some claim; for
   example, the right to mint a token of some other collection.
 - Multiple tokenURI management
+- Contract URI
 - Tokens withdrawal within the contract
 - Bound NFT (TODO)
 
