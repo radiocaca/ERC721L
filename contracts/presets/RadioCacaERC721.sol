@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
-import "./EIP5058/extensions/EIP5058Bound.sol";
+import "../EIP5058/extensions/EIP5058Bound.sol";
 import "./ERC721Redeemable.sol";
 import "./TokenWithdraw.sol";
 
