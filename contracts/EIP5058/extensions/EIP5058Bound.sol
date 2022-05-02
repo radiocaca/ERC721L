@@ -15,14 +15,14 @@ abstract contract EIP5058Bound is ERC721Lockable {
     }
 
     function _setBoundBaseTokenURI(string memory uri) internal {
-        address bound = IEIP5058Factory(factory).getBound(address(this));
+        address bound = IEIP5058Factory(factory).boundOf(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
 
         IERC721Bound(bound).setBaseTokenURI(uri);
     }
 
     function _setBoundContractURI(string memory uri) internal {
-        address bound = IEIP5058Factory(factory).getBound(address(this));
+        address bound = IEIP5058Factory(factory).boundOf(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
 
         IERC721Bound(bound).setContractURI(uri);
@@ -35,7 +35,7 @@ abstract contract EIP5058Bound is ERC721Lockable {
     ) internal virtual override {
         super._beforeTokenLock(from, tokenId, expired);
 
-        address bound = IEIP5058Factory(factory).getBound(address(this));
+        address bound = IEIP5058Factory(factory).boundOf(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
         if (expired == 0) {
             IERC721Bound(bound).safeMint(msg.sender, tokenId, "");

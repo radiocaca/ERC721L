@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import "./IERC721Bound.sol";
 
 interface IPreimage {
     /**
@@ -25,52 +26,56 @@ interface IPreimage {
  * but it is guaranteed that only one bound token and the original token can be traded in the market at
  * the same time. When the original token lock expires, the bound token must be destroyed.
  */
-contract ERC721Bound is ERC721Enumerable, IERC2981 {
-    address public preimage;
+contract ERC721Bound is ERC721Enumerable, IERC2981, IERC721Bound {
+    address private _preimage;
 
     string private _contractURI;
 
-    string public baseTokenURI;
+    string private _baseTokenURI;
 
     constructor(
         address preimage_,
         string memory name_,
         string memory symbol_
     ) ERC721(name_, symbol_) {
-        preimage = preimage_;
+        _preimage = preimage_;
     }
 
     /**
      * @dev Throws if called by any account other than the preimage.
      */
     modifier onlyPreimage() {
-        require(preimage == msg.sender, "ERC721Bound: caller is not the preimage");
+        require(_preimage == msg.sender, "ERC721Bound: caller is not the preimage");
         _;
+    }
+
+    function preimage() public view virtual override returns (address) {
+        return _preimage;
     }
 
     /**
      * @dev See {ERC721-_baseURI}.
      */
     function _baseURI() internal view virtual override returns (string memory) {
-        return baseTokenURI;
+        return _baseTokenURI;
     }
 
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        if (bytes(baseTokenURI).length > 0) {
+        if (bytes(_baseTokenURI).length > 0) {
             return super.tokenURI(tokenId);
         }
 
-        return IERC721Metadata(preimage).tokenURI(tokenId);
+        return IERC721Metadata(_preimage).tokenURI(tokenId);
     }
 
     /**
      * @dev See {IERC2981-royaltyInfo}.
      */
     function royaltyInfo(uint256 tokenId, uint256 salePrice) public view virtual override returns (address, uint256) {
-        return IERC2981(preimage).royaltyInfo(tokenId, salePrice);
+        return IERC2981(_preimage).royaltyInfo(tokenId, salePrice);
     }
 
     /**
@@ -81,8 +86,8 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
             return _contractURI;
         }
 
-        if (IERC165(preimage).supportsInterface(IPreimage.contractURI.selector)) {
-            return IPreimage(preimage).contractURI();
+        if (IERC165(_preimage).supportsInterface(IPreimage.contractURI.selector)) {
+            return IPreimage(_preimage).contractURI();
         }
 
         return "";
@@ -96,12 +101,12 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
     }
 
     // @dev Sets the base token URI prefix.
-    function setBaseTokenURI(string memory _baseTokenURI) external onlyPreimage {
-        baseTokenURI = _baseTokenURI;
+    function setBaseTokenURI(string memory baseTokenURI) public virtual override onlyPreimage {
+        _baseTokenURI = baseTokenURI;
     }
 
     // @dev Sets the contract URI.
-    function setContractURI(string memory uri) external onlyPreimage {
+    function setContractURI(string memory uri) public virtual override onlyPreimage {
         _contractURI = uri;
     }
 
@@ -120,7 +125,7 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
         address to,
         uint256 tokenId,
         bytes memory data
-    ) external onlyPreimage {
+    ) public virtual override onlyPreimage {
         _safeMint(to, tokenId, data);
     }
 
@@ -135,7 +140,7 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
      *
      * Emits a {Transfer} event.
      */
-    function burn(uint256 tokenId) external onlyPreimage {
+    function burn(uint256 tokenId) public virtual override onlyPreimage {
         _burn(tokenId);
     }
 
@@ -150,9 +155,9 @@ contract ERC721Bound is ERC721Enumerable, IERC2981 {
         super._beforeTokenTransfer(from, to, tokenId);
 
         if (to != address(0)) {
-            require(IPreimage(preimage).isLocked(tokenId), "ERC721Bound: token transfer while preimage not locked");
+            require(IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token transfer while preimage not locked");
         } else {
-            require(!IPreimage(preimage).isLocked(tokenId), "ERC721Bound: token burn while preimage locked");
+            require(!IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token burn while preimage locked");
         }
     }
 

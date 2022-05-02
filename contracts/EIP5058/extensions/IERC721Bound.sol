@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Creator: tyler@radiocaca.com
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.8;
 
-import "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-
-interface IERC721Bound is IERC721Enumerable, IERC2981 {
+interface IERC721Bound {
     function preimage() external view returns (address);
 
     function contractURI() external view returns (string memory);

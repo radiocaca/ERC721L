@@ -5,25 +5,43 @@ pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "./ERC721Bound.sol";
+import "./IEIP5058Factory.sol";
 
-contract EIP5058Factory {
-    mapping(address => address[]) public mutants;
+contract EIP5058Factory is IEIP5058Factory {
+    // Mapping from preimage to list of mutants
+    mapping(address => address[]) private _mutants;
 
-    mapping(address => mapping(bytes32 => address)) public getMutant;
+    // preimage => salt => mutant
+    mapping(address => mapping(bytes32 => address)) private _allMutants;
 
-    event DeployedMutant(address indexed preimage, address mutant, bytes32 salt);
-
-    function allMutantsLength(address preimage) public view returns (uint256) {
-        return mutants[preimage].length;
+    function allMutantsLength(address preimage) public view virtual override returns (uint256) {
+        return _mutants[preimage].length;
     }
 
-    function getBound(address preimage) public view returns (address) {
-        return getMutant[preimage][keccak256(abi.encode(preimage))];
+    /**
+     * @dev See {IEIP5058Factory-mutantByIndex}.
+     */
+    function mutantByIndex(address preimage, uint256 index) public view virtual override returns (address) {
+        require(index < allMutantsLength(preimage), "EIP5058Factory: index out of bounds");
+
+        return _mutants[preimage][index];
     }
 
-    function boundDeploy(address preimage) external returns (address) {
+    function boundOf(address preimage) public view virtual override returns (address) {
+        address bound = mutantOf(preimage, keccak256(abi.encode(preimage)));
+        require(bound != address(0), "EIP5058Factory: query for nonexistent bound");
+        return bound;
+    }
+
+    function mutantOf(address preimage, bytes32 salt) public view virtual override returns (address) {
+        address mutant = _allMutants[preimage][salt];
+        require(mutant != address(0), "EIP5058Factory: query for nonexistent mutant");
+        return mutant;
+    }
+
+    function boundDeploy(address preimage) public virtual override returns (address) {
         bytes32 salt = keccak256(abi.encode(preimage));
-        require(getMutant[preimage][salt] == address(0), "EIP5058Bound: bound nft is already deployed");
+        require(_allMutants[preimage][salt] == address(0), "EIP5058Factory: bound nft is already deployed");
 
         return _deploy(preimage, salt, "Bound");
     }
@@ -32,8 +50,8 @@ contract EIP5058Factory {
         address preimage,
         bytes32 salt,
         bytes memory prefix
-    ) external returns (address) {
-        require(getMutant[preimage][salt] == address(0), "EIP5058Bound: mutant nft is already deployed");
+    ) public virtual override returns (address) {
+        require(_allMutants[preimage][salt] == address(0), "EIP5058Factory: mutant nft is already deployed");
 
         return _deploy(preimage, salt, prefix);
     }
