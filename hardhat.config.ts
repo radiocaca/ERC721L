@@ -1,5 +1,7 @@
-require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-etherscan");
+import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-etherscan";
 
 const { config } = require("dotenv");
 const { resolve } = require("path");
@@ -16,11 +18,11 @@ config({ path: resolve(__dirname, "./.env") });
 // });
 
 if (process.env.REPORT_GAS) {
-  require('hardhat-gas-reporter');
+  require("hardhat-gas-reporter");
 }
 
 if (process.env.REPORT_COVERAGE) {
-  require('solidity-coverage');
+  require("solidity-coverage");
 }
 
 const MNEMONIC = process.env.MNEMONIC || "";
@@ -38,7 +40,7 @@ const chainIds = {
   bnbmain: 56,
   bnbtest: 97,
   okcmain: 66,
-  okctest: 65
+  okctest: 65,
 };
 
 // You need to export an object to set up your config
@@ -53,9 +55,9 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
-      }
-    }
+        runs: 200,
+      },
+    },
   },
   networks: {
     hardhat: {
@@ -67,38 +69,38 @@ module.exports = {
       chainId: chainIds.hardhat,
     },
     mainnet: {
-      url: 'https://falling-frosty-dew.quiknode.pro/',
+      url: "https://falling-frosty-dew.quiknode.pro/",
       chainId: chainIds.mainnet,
-      accounts: [PRIVATEKEY]
+      accounts: [PRIVATEKEY],
     },
     bnbmain: {
-      url: 'https://spring-falling-water.bsc.quiknode.pro/',
+      url: "https://spring-falling-water.bsc.quiknode.pro/",
       chainId: chainIds.bnbmain,
-      accounts: [PRIVATEKEY]
+      accounts: [PRIVATEKEY],
     },
     bnbtest: {
-      url: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       chainId: chainIds.bnbtest,
-      accounts: [PRIVATEKEY]
+      accounts: [PRIVATEKEY],
     },
     okcmain: {
-      url: 'https://exchainrpc.okex.org/',
+      url: "https://exchainrpc.okex.org/",
       chainId: chainIds.okcmain,
-      accounts: [PRIVATEKEY]
+      accounts: [PRIVATEKEY],
     },
     okctest: {
-      url: 'https://exchaintestrpc.okex.org/',
+      url: "https://exchaintestrpc.okex.org/",
       chainId: chainIds.okctest,
-      accounts: [PRIVATEKEY]
-    }
+      accounts: [PRIVATEKEY],
+    },
   },
   gasReporter: {
-    currency: 'USD',
+    currency: "USD",
     gasPrice: 100,
     showTimeSpent: true,
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
   },
-  plugins: ['solidity-coverage'],
+  plugins: ["solidity-coverage"],
 };
