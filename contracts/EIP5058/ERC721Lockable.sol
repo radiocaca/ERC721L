@@ -74,7 +74,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      * @dev See {IERC721Lockable-isLocked}.
      */
     function isLocked(uint256 tokenId) public view virtual override returns (bool) {
-        return lockedTokens[tokenId] > block.timestamp;
+        return lockedTokens[tokenId] > block.number;
     }
 
     /**
@@ -87,7 +87,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
     ) public virtual override {
         //solhint-disable-next-line max-line-length
         require(_isLockApprovedOrOwner(_msgSender(), tokenId), "ERC721L: lock caller is not owner nor approved");
-        require(expired > block.timestamp, "ERC721L: expired time must be greater than current block time");
+        require(expired > block.number, "ERC721L: expired time must be greater than current block number");
         require(!isLocked(tokenId), "ERC721L: token is locked");
 
         _beforeTokenLock(from, tokenId, expired);
@@ -150,7 +150,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         uint256 expired,
         bytes memory _data
     ) internal virtual {
-        require(expired > block.timestamp, "ERC721L: lock mint for invalid lock time");
+        require(expired > block.number, "ERC721L: lock mint for invalid lock block number");
 
         _safeMint(to, tokenId, _data);
 
