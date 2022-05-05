@@ -137,7 +137,7 @@ contract RadioCacaERC721 is
     }
 
     function setAttachableCollection(address collection, bool isAttach) external onlyOwner {
-        _setAttachableCollection(collection, isAllow);
+        _setAttachableCollection(collection, isAttach);
     }
 
     function setAllowTransferIn(address white, bool isAllow) external onlyOwner {

@@ -16,8 +16,6 @@ interface IBoundERC721Receiver {
 }
 
 abstract contract ERC721Attachable is ERC721 {
-    using Address for address;
-
     struct BoundToken {
         address collection;
         uint256 tokenId;
@@ -33,7 +31,7 @@ abstract contract ERC721Attachable is ERC721 {
     mapping(address => bool) public allowTransferIn;
 
     function _setAttachableCollection(address collection, bool isAttach) internal virtual {
-        attachableCollections[collection] = isAllow;
+        attachableCollections[collection] = isAttach;
     }
 
     function _setAllowTransferIn(address white, bool isAllow) internal virtual {
@@ -52,7 +50,7 @@ abstract contract ERC721Attachable is ERC721 {
 
         require(
             _checkOnBoundERC721Received(collection, to, tokenId, hostTokenId, ""),
-            "ERC721: transfer to non BoundERC721Receiver implementer"
+            "ERC721Attachable: transfer to non BoundERC721Receiver implementer"
         );
 
         _mint(to, tokenId);
@@ -70,7 +68,7 @@ abstract contract ERC721Attachable is ERC721 {
             if (msg.sender == attachedTokens[tokenId].collection) {
                 _transfer(from, to, tokenId);
             } else {
-                require(allowTransferIn[msg.sender], "attached token transfer not allowed");
+                require(allowTransferIn[msg.sender], "ERC721Attachable: attached token transfer not allowed");
                 super.transferFrom(from, to, tokenId);
             }
         } else {
@@ -95,7 +93,7 @@ abstract contract ERC721Attachable is ERC721 {
             if (msg.sender == attachedTokens[tokenId].collection) {
                 _safeTransfer(from, to, tokenId, data);
             } else {
-                require(allowTransferIn[msg.sender], "attached token transfer not allowed");
+                require(allowTransferIn[msg.sender], "ERC721Attachable: attached token transfer not allowed");
                 super.safeTransferFrom(from, to, tokenId, data);
             }
         } else {
@@ -119,7 +117,7 @@ abstract contract ERC721Attachable is ERC721 {
         uint256 tokenId,
         bytes calldata /*data*/
     ) external returns (bytes4) {
-        require(attachableCollections[_msgSender()], "attached to non boundERC721 receiver");
+        require(attachableCollections[_msgSender()], "ERC721Attachable: attached to non boundERC721 receiver");
 
         hostTokens[tokenId].push(BoundToken(_msgSender(), boundTokenId));
 
@@ -133,22 +131,18 @@ abstract contract ERC721Attachable is ERC721 {
         uint256 hostTokenId,
         bytes memory _data
     ) private returns (bool) {
-        if (to.isContract()) {
-            try
-                IBoundERC721Receiver(from).onBoundERC721Received(_msgSender(), to, tokenId, hostTokenId, _data)
-            returns (bytes4 retval) {
-                return retval == IBoundERC721Receiver.onBoundERC721Received.selector;
-            } catch (bytes memory reason) {
-                if (reason.length == 0) {
-                    revert("ERC721: transfer to non BoundERC721Receiver implementer");
-                } else {
-                    assembly {
-                        revert(add(32, reason), mload(reason))
-                    }
+        try IBoundERC721Receiver(from).onBoundERC721Received(_msgSender(), to, tokenId, hostTokenId, _data) returns (
+            bytes4 retval
+        ) {
+            return retval == IBoundERC721Receiver.onBoundERC721Received.selector;
+        } catch (bytes memory reason) {
+            if (reason.length == 0) {
+                revert("ERC721Attachable: transfer to non BoundERC721Receiver implementer");
+            } else {
+                assembly {
+                    revert(add(32, reason), mload(reason))
                 }
             }
-        } else {
-            return true;
         }
     }
 }
