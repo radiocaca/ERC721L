@@ -79,6 +79,9 @@ contract EIP5058Factory is IEIP5058Factory {
 
         emit DeployedMutant(preimage, addr, salt);
 
+        _allMutants[preimage][salt] = addr;
+        _mutants[preimage].push(addr);
+
         return addr;
     }
 }

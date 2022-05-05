@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "../EIP5058/extensions/EIP5058Bound.sol";
 import "./ERC721Redeemable.sol";
+import "./ERC721Attachable.sol";
 import "./TokenWithdraw.sol";
 
 contract RadioCacaERC721 is
@@ -21,6 +22,7 @@ contract RadioCacaERC721 is
     ERC721URIStorage,
     ERC721Pausable,
     EIP5058Bound,
+    ERC721Attachable,
     ERC721Redeemable,
     ERC721Royalty,
     AccessControlEnumerable,
@@ -60,7 +62,6 @@ contract RadioCacaERC721 is
         bytes memory data
     ) external onlyRole(MINTER_ROLE) {
         _safeMint(to, tokenId, data);
-        assert(totalSupply() <= MAX_SUPPLY);
     }
 
     function lockMint(
@@ -73,7 +74,7 @@ contract RadioCacaERC721 is
             expired = type(uint256).max;
         } else {
             unchecked {
-                expired = duration + block.timestamp;
+                expired = duration + block.number;
             }
         }
 
@@ -107,6 +108,40 @@ contract RadioCacaERC721 is
         );
 
         _burn(tokenId);
+    }
+
+    function attachedMint(
+        address to,
+        uint256 tokenId,
+        address collection,
+        uint256 hostTokenId
+    ) external onlyRole(MINTER_ROLE) {
+        _attachedMint(to, tokenId, collection, hostTokenId);
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override(ERC721, ERC721Attachable) {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory _data
+    ) public virtual override(ERC721, ERC721Attachable) {
+        super.safeTransferFrom(from, to, tokenId, _data);
+    }
+
+    function setAttachableCollection(address collection, bool isAttach) external onlyOwner {
+        _setAttachableCollection(collection, isAllow);
+    }
+
+    function setAllowTransferIn(address white, bool isAllow) external onlyOwner {
+        _setAllowTransferIn(white, isAllow);
     }
 
     function setRoleAdmin(bytes32 roleId, bytes32 adminRoleId) external onlyOwner {
