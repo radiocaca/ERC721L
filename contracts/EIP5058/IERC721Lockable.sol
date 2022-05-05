@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @dev ERC-721 Non-Fungible Token Standard, optional lockable extension
@@ -14,14 +14,14 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
  * If the nft lending protocol is compatible with this extension, the trouble caused by the NFT
  * airdrop can be avoided, because the airdrop is still in the user's wallet
  */
-interface IERC721Lockable is IERC165 {
+interface IERC721Lockable is IERC721 {
     /**
-     * @dev Emitted when `tokenId` token is locked from `from`.
+     * @dev Emitted when `tokenId` token is locked by `operator` from `from`.
      */
     event Locked(address indexed operator, address indexed from, uint256 indexed tokenId, uint256 expired);
 
     /**
-     * @dev Emitted when `tokenId` token is unlocked from `from`.
+     * @dev Emitted when `tokenId` token is unlocked by `operator` from `from`.
      */
     event Unlocked(address indexed operator, address indexed from, uint256 indexed tokenId);
 
@@ -36,7 +36,7 @@ interface IERC721Lockable is IERC165 {
     event LockApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
     /**
-     * @dev Returns the current locker of the `tokenId` token.
+     * @dev Returns the locker who is locking the `tokenId` token.
      *
      * Requirements:
      *
@@ -45,13 +45,13 @@ interface IERC721Lockable is IERC165 {
     function lockerOf(uint256 tokenId) external view returns (address locker);
 
     /**
-     * @dev Lock `tokenId` token until `expired` from `from`.
+     * @dev Lock `tokenId` token until the block number is greater than `expired` to be unlocked.
      *
      * Requirements:
      *
      * - `from` cannot be the zero address.
      * - `tokenId` token must be owned by `from`.
-     * - `expired` must be greater than block.timestamp
+     * - `expired` must be greater than block.number
      * - If the caller is not `from`, it must be approved to lock this token
      * by either {lockApprove} or {setLockApprovalForAll}.
      *
@@ -64,7 +64,7 @@ interface IERC721Lockable is IERC165 {
     ) external;
 
     /**
-     * @dev Unlock `tokenId` token until `expired` from `from`.
+     * @dev Unlock `tokenId` token.
      *
      * Requirements:
      *
@@ -98,7 +98,7 @@ interface IERC721Lockable is IERC165 {
      *
      * Emits an {LockApprovalForAll} event.
      */
-    function setLockApprovalForAll(address operator, bool _approved) external;
+    function setLockApprovalForAll(address operator, bool approved) external;
 
     /**
      * @dev Returns the account lock approved for `tokenId` token.
