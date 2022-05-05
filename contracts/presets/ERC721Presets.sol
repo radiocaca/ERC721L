@@ -14,7 +14,7 @@ import "./ERC721Redeemable.sol";
 import "./ERC721Attachable.sol";
 import "./TokenWithdraw.sol";
 
-contract RadioCacaERC721 is
+contract ERC721Presets is
     Context,
     OwnerPausable,
     BaseTokenURI,
