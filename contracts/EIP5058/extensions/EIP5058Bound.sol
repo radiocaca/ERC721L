@@ -37,7 +37,7 @@ abstract contract EIP5058Bound is ERC721Lockable {
 
         address bound = IEIP5058Factory(factory).boundOf(address(this));
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
-        if (expired == 0) {
+        if (expired != 0) {
             IERC721Bound(bound).safeMint(msg.sender, tokenId, "");
         } else {
             IERC721Bound(bound).burn(tokenId);
