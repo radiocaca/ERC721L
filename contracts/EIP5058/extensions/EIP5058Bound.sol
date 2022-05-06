@@ -28,6 +28,9 @@ abstract contract EIP5058Bound is ERC721Lockable {
         IERC721Bound(bound).setContractURI(uri);
     }
 
+    // NOTE:
+    //
+    // this will be called when `lockFrom` which will trigger `_beforeTokenTransfer`
     function _beforeTokenLock(
         address from,
         uint256 tokenId,
