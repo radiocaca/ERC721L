@@ -144,6 +144,9 @@ contract ERC721Bound is ERC721Enumerable, IERC2981, IERC721Bound {
         _burn(tokenId);
     }
 
+    // this function triggers when mint
+    //
+    // this will prevent users do `lockFrom` since there is also a mint transaction in _beforeTokenLock
     /**
      * @dev See {ERC721-_beforeTokenTransfer}.
      */

@@ -24,18 +24,26 @@ contract EIP5058Mock is Context, ERC721Enumerable, EIP5058Bound {
         _safeMint(to, tokenId, data);
     }
 
+    // NOTE
+    //
+    // use timestamp here when the isLocked condition use block number
     function lockMint(
         address to,
         uint256 tokenId,
         uint256 duration
     ) external {
         uint256 expired = 0;
+        // if (duration == 0) {
+        //     expired = type(uint256).max;
+        // } else {
+        //     unchecked {
+        //         expired = duration + block.timestamp;
+        //     }
+        // }
         if (duration == 0) {
-            expired = type(uint256).max;
+            expired = block.number;
         } else {
-            unchecked {
-                expired = duration + block.timestamp;
-            }
+            expired = duration;
         }
 
         _safeLockMint(to, tokenId, expired, "");
