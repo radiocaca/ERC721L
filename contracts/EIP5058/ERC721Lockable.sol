@@ -51,6 +51,14 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      */
     function lockerOf(uint256 tokenId) public view virtual override returns (address) {
         require(_exists(tokenId), "ERC721L: locker query for nonexistent token");
+        // NOTE
+        //
+        // why empty address?
+        //
+        // if return empty address it will be impossible to do `unlockFrom` anymore
+        // which
+        //  - will throw a wrong error message
+        //  - only delete the kv in the mapping
         if (!isLocked(tokenId)) return address(0);
 
         return _lockApprovals[tokenId];
@@ -97,6 +105,10 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         _afterTokenLock(from, tokenId, expired);
     }
 
+    // NOTE:
+    //
+    // this function is useless, `delete lockedTokens[tokenId]` or not,
+    // doesn't make sense to the result of `isLocked`
     /**
      * @dev See {IERC721Lockable-unlockFrom}.
      */

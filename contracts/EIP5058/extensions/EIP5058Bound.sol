@@ -39,8 +39,16 @@ abstract contract EIP5058Bound is ERC721Lockable {
         require(bound != address(0), "EIP5058Bound: bound nft not deployed");
         if (expired != 0) {
             IERC721Bound(bound).safeMint(msg.sender, tokenId, "");
-        } else {
-            IERC721Bound(bound).burn(tokenId);
         }
+        // NOTE:
+        //
+        // why burn? burn in mint or in unlock?
+        //
+        // TODO:
+        //
+        // this doens't work for unlockFrom
+        // else {
+        //     IERC721Bound(bound).burn(tokenId);
+        // }
     }
 }
