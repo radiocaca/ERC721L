@@ -17,6 +17,10 @@ interface IBoundERC721Receiver {
     ) external returns (bytes4);
 }
 
+interface IERC721Burnable {
+    function burn(uint256 tokenId) external;
+}
+
 abstract contract ERC721Attachable is Ownable, ERC721 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -25,43 +29,43 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         uint256 tokenId;
     }
 
-    // attached tokenId => host token
-    mapping(uint256 => BoundToken) public attachedTokens;
-    // host tokenId => attached token
-    mapping(uint256 => BoundToken[]) private _hostTokens;
+    // slave tokenId => master token
+    mapping(uint256 => BoundToken) public slaveTokens;
+    // master tokenId => slave token
+    mapping(uint256 => BoundToken[]) private _masterTokens;
     // collection => tokenId => index
-    mapping(address => mapping(uint256 => uint256)) private _attachedTokenIndex;
+    mapping(address => mapping(uint256 => uint256)) private _slaveTokenIndex;
 
-    EnumerableSet.AddressSet private _attachableCollections;
+    EnumerableSet.AddressSet private _slaveCollections;
 
     EnumerableSet.AddressSet private _transferApprovals;
 
     event CollectionRemoved(address indexed collection);
-    event CollectionAttached(address indexed collection);
+    event CollectionAdded(address indexed collection);
 
     event TransferApprove(address indexed operator);
     event TransferDisapprove(address indexed operator);
 
-    function allAttachedTokenLength(uint256 tokenId) public view returns (uint256) {
-        return _hostTokens[tokenId].length;
+    function allSlaveTokenLength(uint256 tokenId) public view returns (uint256) {
+        return _masterTokens[tokenId].length;
     }
 
     function addCollection(address collection) external onlyOwner {
-        require(!_attachableCollections.contains(collection), "ERC721Attachable: collection already attached");
-        _attachableCollections.add(collection);
+        require(!_slaveCollections.contains(collection), "ERC721Attachable: collection already slave");
+        _slaveCollections.add(collection);
 
-        emit CollectionAttached(collection);
+        emit CollectionAdded(collection);
     }
 
     function removeCollection(address collection) external onlyOwner {
-        require(_attachableCollections.contains(collection), "ERC721Attachable: collection not attached");
-        _attachableCollections.remove(collection);
+        require(_slaveCollections.contains(collection), "ERC721Attachable: collection not slave");
+        _slaveCollections.remove(collection);
 
         emit CollectionRemoved(collection);
     }
 
-    function isAttachedCollection(address collection) public view returns (bool) {
-        return _attachableCollections.contains(collection);
+    function isSlaveCollection(address collection) public view returns (bool) {
+        return _slaveCollections.contains(collection);
     }
 
     function addTransferApproval(address operator) external onlyOwner {
@@ -82,27 +86,33 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         return _transferApprovals.contains(operator);
     }
 
-    function isAttachedToken(uint256 tokenId) public view returns (bool) {
-        return attachedTokens[tokenId].collection != address(0);
+    function isSlaveToken(uint256 tokenId) public view returns (bool) {
+        return slaveTokens[tokenId].collection != address(0);
     }
 
-    function attachedTokenByIndex(uint256 tokenId, uint256 index) public view returns (uint256) {
-        require(index < _hostTokens[tokenId].length, "ERC721Attachable: tokenId index out of bounds");
-        return _hostTokens[tokenId][index];
+    function masterOf(uint256 tokenId) public view returns (address) {
+        require(isSlaveToken(tokenId), "ERC721Attachable: not slave token");
+
+        return slaveTokens[tokenId].collection;
     }
 
-    function _attachedMint(
+    function slaveTokenByIndex(uint256 tokenId, uint256 index) public view returns (BoundToken memory) {
+        require(index < _masterTokens[tokenId].length, "ERC721Attachable: tokenId index out of bounds");
+        return _masterTokens[tokenId][index];
+    }
+
+    function _slaveMint(
         address to,
         uint256 tokenId,
         address collection,
-        uint256 hostTokenId
+        uint256 masterTokenId
     ) internal virtual {
-        BoundToken storage at = attachedTokens[tokenId];
+        BoundToken storage at = slaveTokens[tokenId];
         at.collection = collection;
-        at.tokenId = hostTokenId;
+        at.tokenId = masterTokenId;
 
         require(
-            _checkOnBoundERC721Received(collection, to, tokenId, hostTokenId, ""),
+            _checkOnBoundERC721Received(collection, to, tokenId, masterTokenId, ""),
             "ERC721Attachable: transfer to non BoundERC721Receiver implementer"
         );
 
@@ -115,14 +125,22 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
     function _burn(uint256 tokenId) internal virtual override {
         super._burn(tokenId);
 
-        BoundToken storage at = attachedTokens[tokenId];
+        BoundToken storage at = slaveTokens[tokenId];
         if (at.collection != address(0)) {
             require(
                 _checkOnBoundERC721Received(at.collection, address(0), tokenId, at.tokenId, ""),
                 "ERC721Attachable: transfer to non BoundERC721Receiver implementer"
             );
 
-            delete attachedTokens[tokenId];
+            delete slaveTokens[tokenId];
+        }
+
+        uint256 slaveNum = allSlaveTokenLength(tokenId);
+        if (slaveNum > 0) {
+            for (uint256 i = 0; i < slaveNum; i++) {
+                IERC721Burnable(_masterTokens[tokenId][i].collection).burn(_masterTokens[tokenId][i].tokenId);
+            }
+            delete _masterTokens[tokenId];
         }
     }
 
@@ -134,18 +152,18 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         address to,
         uint256 tokenId
     ) public virtual override {
-        if (attachedTokens[tokenId].collection != address(0)) {
-            if (msg.sender == attachedTokens[tokenId].collection) {
+        if (slaveTokens[tokenId].collection != address(0)) {
+            if (msg.sender == slaveTokens[tokenId].collection) {
                 _transfer(from, to, tokenId);
             } else {
-                require(isTransferApproval(msg.sender), "ERC721Attachable: attached token transfer not allowed");
+                require(_transferApprovals.contains(msg.sender), "ERC721Attachable: slave token transfer not allowed");
                 super.transferFrom(from, to, tokenId);
             }
         } else {
             super.transferFrom(from, to, tokenId);
 
-            for (uint256 i = 0; i < _hostTokens[tokenId].length; i++) {
-                IERC721(_hostTokens[tokenId][i].collection).transferFrom(from, to, _hostTokens[tokenId][i].tokenId);
+            for (uint256 i = 0; i < _masterTokens[tokenId].length; i++) {
+                IERC721(_masterTokens[tokenId][i].collection).transferFrom(from, to, _masterTokens[tokenId][i].tokenId);
             }
         }
     }
@@ -159,21 +177,21 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         uint256 tokenId,
         bytes memory data
     ) public virtual override {
-        if (attachedTokens[tokenId].collection != address(0)) {
-            if (msg.sender == attachedTokens[tokenId].collection) {
+        if (slaveTokens[tokenId].collection != address(0)) {
+            if (msg.sender == slaveTokens[tokenId].collection) {
                 _safeTransfer(from, to, tokenId, data);
             } else {
-                require(isTransferApproval(msg.sender), "ERC721Attachable: attached token transfer not allowed");
+                require(_transferApprovals.contains(msg.sender), "ERC721Attachable: slave token transfer not allowed");
                 super.safeTransferFrom(from, to, tokenId, data);
             }
         } else {
             super.safeTransferFrom(from, to, tokenId, data);
 
-            for (uint256 i = 0; i < _hostTokens[tokenId].length; i++) {
-                IERC721(_hostTokens[tokenId][i].collection).safeTransferFrom(
+            for (uint256 i = 0; i < _masterTokens[tokenId].length; i++) {
+                IERC721(_masterTokens[tokenId][i].collection).safeTransferFrom(
                     from,
                     to,
-                    _hostTokens[tokenId][i].tokenId,
+                    _masterTokens[tokenId][i].tokenId,
                     data
                 );
             }
@@ -187,14 +205,14 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         uint256 tokenId,
         bytes calldata /*data*/
     ) external returns (bytes4) {
-        require(isAttachedCollection(msg.sender), "ERC721Attachable: attached to non boundERC721 receiver");
+        require(isSlaveCollection(msg.sender), "ERC721Attachable: slave to non boundERC721 receiver");
 
         if (to != address(0)) {
-            _attachedTokenIndex[msg.sender][boundTokenId] = _hostTokens[tokenId].length;
+            _slaveTokenIndex[msg.sender][boundTokenId] = _masterTokens[tokenId].length;
 
-            _hostTokens[tokenId].push(BoundToken(msg.sender, boundTokenId));
+            _masterTokens[tokenId].push(BoundToken(msg.sender, boundTokenId));
         } else {
-            _removeTokenFromHostTokens(tokenId, msg.sender, boundTokenId);
+            _removeTokenFromMasterTokens(tokenId, msg.sender, boundTokenId);
         }
 
         return this.onBoundERC721Received.selector;
@@ -204,10 +222,10 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         address from,
         address to,
         uint256 tokenId,
-        uint256 hostTokenId,
+        uint256 masterTokenId,
         bytes memory _data
     ) private returns (bool) {
-        try IBoundERC721Receiver(from).onBoundERC721Received(msg.sender, to, tokenId, hostTokenId, _data) returns (
+        try IBoundERC721Receiver(from).onBoundERC721Received(msg.sender, to, tokenId, masterTokenId, _data) returns (
             bytes4 retval
         ) {
             return retval == IBoundERC721Receiver.onBoundERC721Received.selector;
@@ -222,19 +240,19 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         }
     }
 
-    function _removeTokenFromHostTokens(
+    function _removeTokenFromMasterTokens(
         uint256 tokenId,
         address collection,
         uint256 boundTokenId
     ) private {
-        uint256 lastTokenIndex = _hostTokens[tokenId].length - 1;
-        uint256 tokenIndex = _attachedTokenIndex[collection][boundTokenId];
+        uint256 lastTokenIndex = _masterTokens[tokenId].length - 1;
+        uint256 tokenIndex = _slaveTokenIndex[collection][boundTokenId];
 
-        BoundToken storage bToken = _hostTokens[tokenId][lastTokenIndex];
-        _hostTokens[tokenId][tokenIndex] = BoundToken(bToken.collection, bToken.tokenId);
-        _attachedTokenIndex[bToken.collection][bToken.tokenId] = tokenIndex;
+        BoundToken storage bToken = _masterTokens[tokenId][lastTokenIndex];
+        _masterTokens[tokenId][tokenIndex] = BoundToken(bToken.collection, bToken.tokenId);
+        _slaveTokenIndex[bToken.collection][bToken.tokenId] = tokenIndex;
 
-        delete _attachedTokenIndex[collection][boundTokenId];
-        _hostTokens[tokenId].pop();
+        delete _slaveTokenIndex[collection][boundTokenId];
+        _masterTokens[tokenId].pop();
     }
 }

@@ -95,11 +95,11 @@ contract ERC721Basic is
 
     function burn(uint256 tokenId) external {
         require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || hasRole(BURNER_ROLE, _msgSender()),
+            _isApprovedOrOwner(_msgSender(), tokenId) ||
+                hasRole(BURNER_ROLE, _msgSender()) ||
+                masterOf(tokenId) == msg.sender,
             "ERC721: caller is not owner nor approved"
         );
-
-        // TODO attach
 
         _burn(tokenId);
     }
@@ -110,7 +110,7 @@ contract ERC721Basic is
         address collection,
         uint256 hostTokenId
     ) external onlyRole(MINTER_ROLE) {
-        _attachedMint(to, tokenId, collection, hostTokenId);
+        _slaveMint(to, tokenId, collection, hostTokenId);
     }
 
     function transferFrom(

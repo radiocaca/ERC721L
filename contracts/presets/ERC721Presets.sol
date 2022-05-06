@@ -116,7 +116,7 @@ contract ERC721Presets is
         address collection,
         uint256 hostTokenId
     ) external onlyRole(MINTER_ROLE) {
-        _attachedMint(to, tokenId, collection, hostTokenId);
+        _slaveMint(to, tokenId, collection, hostTokenId);
     }
 
     function transferFrom(
