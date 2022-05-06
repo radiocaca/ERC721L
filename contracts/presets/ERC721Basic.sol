@@ -6,37 +6,31 @@ import "@divergencetech/ethier/contracts/erc721/BaseTokenURI.sol";
 import "@divergencetech/ethier/contracts/utils/OwnerPausable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "../EIP5058/extensions/EIP5058Bound.sol";
-import "./ERC721Redeemable.sol";
 import "./ERC721Attachable.sol";
+import "./ERC721Redeemable.sol";
 import "./TokenWithdraw.sol";
 
-contract ERC721Presets is
-    Context,
-    OwnerPausable,
+contract ERC721Basic is
     BaseTokenURI,
+    OwnerPausable,
+    AccessControlEnumerable,
     ERC721Enumerable,
-    ERC721URIStorage,
     ERC721Pausable,
+    ERC721Royalty,
     EIP5058Bound,
     ERC721Attachable,
     ERC721Redeemable,
-    ERC721Royalty,
-    AccessControlEnumerable,
     TokenWithdraw
 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    uint256 public constant MAX_SUPPLY = 10000;
-
     constructor(
         string memory name,
         string memory symbol,
-        address payable royaltyReceiver,
         address redeemProof,
         address mutantFactory
     )
@@ -45,8 +39,6 @@ contract ERC721Presets is
         EIP5058Bound(mutantFactory)
         ERC721Redeemable(IERC721(redeemProof), 2000, 2)
     {
-        _setDefaultRoyalty(royaltyReceiver, 500);
-
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
         _grantRole(BURNER_ROLE, _msgSender());
@@ -107,6 +99,8 @@ contract ERC721Presets is
             "ERC721: caller is not owner nor approved"
         );
 
+        // TODO attach
+
         _burn(tokenId);
     }
 
@@ -148,41 +142,11 @@ contract ERC721Presets is
         _deleteDefaultRoyalty();
     }
 
-    function setTokenRoyalty(
-        uint256 tokenId,
-        address recipient,
-        uint96 fraction
-    ) external onlyOwner {
-        _setTokenRoyalty(tokenId, recipient, fraction);
-    }
-
-    function resetTokenRoyalty(uint256 tokenId) external onlyOwner {
-        _resetTokenRoyalty(tokenId);
-    }
-
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) external onlyOwner {
-        _setTokenURI(tokenId, _tokenURI);
-    }
-
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
-
-    function _baseURI() internal view override(BaseTokenURI, ERC721) returns (string memory) {
+    function _baseURI() internal view override(ERC721, BaseTokenURI) returns (string memory) {
         return BaseTokenURI._baseURI();
     }
 
-    function _mint(address to, uint256 tokenId) internal virtual override {
-        super._mint(to, tokenId);
-
-        assert(totalSupply() <= MAX_SUPPLY);
-    }
-
-    function _burn(uint256 tokenId)
-        internal
-        virtual
-        override(ERC721, ERC721Royalty, ERC721URIStorage, ERC721Lockable, ERC721Attachable)
-    {
+    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721Royalty, ERC721Lockable, ERC721Attachable) {
         super._burn(tokenId);
     }
 
@@ -198,7 +162,7 @@ contract ERC721Presets is
         public
         view
         virtual
-        override(ERC721, ERC721Enumerable, ERC721Lockable, ERC721Royalty, AccessControlEnumerable)
+        override(AccessControlEnumerable, ERC721, ERC721Enumerable, ERC721Royalty, ERC721Lockable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
