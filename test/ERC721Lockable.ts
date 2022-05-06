@@ -61,7 +61,7 @@ describe("ERC721Lockable contract", function () {
   //   const NFTId = 0;
   //   let block = await ethers.provider.getBlockNumber()
   //   await EIP5058.lockMint(owner.address, NFTId, block + 2);
-  // 
+  //
   //   // lockFrom works
   //   // await ethers.provider.send("evm_mine", []);
   //   // block = await ethers.provider.getBlockNumber()

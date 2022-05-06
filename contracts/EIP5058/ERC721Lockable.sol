@@ -85,6 +85,10 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         return lockedTokens[tokenId] > block.number;
     }
 
+    // NOTE:
+    //
+    // This method is not abled to be called on token minted by `mint`
+    // since `_beforeTokenTransfer` in `_beforeTokenLock` will prevent this.
     /**
      * @dev See {IERC721Lockable-lockFrom}.
      */
