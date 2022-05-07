@@ -18,7 +18,9 @@ describe("EIP5058Bound contract", function () {
 
     const EIP5058BoundFactory = await ethers.getContractFactory("EIP5058BoundMock");
 
-    EIP5058Bound = await EIP5058BoundFactory.deploy("Mock", "M", Factory.address);
+    EIP5058Bound = await EIP5058BoundFactory.deploy("Mock", "M");
+    
+    await EIP5058Bound.setFactory(Factory.address);
 
     await Factory.boundDeploy(EIP5058Bound.address);
   

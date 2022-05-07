@@ -6,14 +6,14 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "../EIP5058/extensions/EIP5058Bound.sol";
 
 contract EIP5058BoundMock is ERC721Enumerable, EIP5058Bound {
-    constructor(
-        string memory name,
-        string memory symbol,
-        address boundFactory
-    ) ERC721(name, symbol) EIP5058Bound(boundFactory) {}
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     function exists(uint256 tokenId) public view returns (bool) {
         return _exists(tokenId);
+    }
+
+    function setFactory(address factory) external {
+        _setFactory(factory);
     }
 
     function lockMint(

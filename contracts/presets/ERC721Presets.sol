@@ -36,10 +36,8 @@ contract ERC721Presets is
     constructor(
         string memory name,
         string memory symbol,
-        address payable royaltyReceiver,
-        address redeemProof,
-        address boundFactory
-    ) ERC721(name, symbol) BaseTokenURI("") EIP5058Bound(boundFactory) ERC721Redeemable(IERC721(redeemProof), 2000, 2) {
+        address payable royaltyReceiver
+    ) ERC721(name, symbol) BaseTokenURI("") {
         _setDefaultRoyalty(royaltyReceiver, 500);
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -105,7 +103,7 @@ contract ERC721Presets is
         _burn(tokenId);
     }
 
-    function attachedMint(
+    function slaveMint(
         address to,
         uint256 tokenId,
         address collection,

@@ -28,12 +28,7 @@ contract ERC721Basic is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        address redeemProof,
-        address boundFactory
-    ) ERC721(name, symbol) BaseTokenURI("") EIP5058Bound(boundFactory) ERC721Redeemable(IERC721(redeemProof), 2000, 2) {
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) BaseTokenURI("") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
         _grantRole(BURNER_ROLE, _msgSender());
@@ -54,18 +49,25 @@ contract ERC721Basic is
     function lockMint(
         address to,
         uint256 tokenId,
-        uint256 duration
+        uint256 expired
     ) external onlyRole(MINTER_ROLE) {
-        uint256 expired = 0;
-        if (duration == 0) {
-            expired = type(uint256).max;
-        } else {
-            unchecked {
-                expired = duration + block.number;
-            }
-        }
-
         _safeLockMint(to, tokenId, expired, "");
+    }
+
+    function proofLockMint(uint256[] calldata proofTokenIds) external {
+        uint256 n = _proofMint(proofTokenIds);
+        for (uint256 i = 0; i < n; i++) {
+            _safeLockMint(msg.sender, proofPoolBeginTokenId, block.number + lockDuration, "");
+            proofPoolBeginTokenId++;
+        }
+    }
+
+    function proofSlaveMint(uint256[] calldata proofTokenIds) external {
+        uint256 n = _proofMint(proofTokenIds);
+        for (uint256 i = 0; i < n; i++) {
+            _slaveMint(msg.sender, proofPoolBeginTokenId, address(redeemProof), proofTokenIds[i]);
+            proofPoolBeginTokenId++;
+        }
     }
 
     function mint(address to, uint256 tokenId) external onlyRole(MINTER_ROLE) {
@@ -99,7 +101,7 @@ contract ERC721Basic is
         _burn(tokenId);
     }
 
-    function attachedMint(
+    function slaveMint(
         address to,
         uint256 tokenId,
         address collection,

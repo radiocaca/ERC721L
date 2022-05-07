@@ -10,12 +10,8 @@ import "../ERC721Lockable.sol";
 abstract contract EIP5058Bound is ERC721Lockable {
     IEIP5058Factory public factory;
 
-    constructor(address _factory) {
+    function _setFactory(address _factory) internal {
         factory = IEIP5058Factory(_factory);
-    }
-
-    function DeployBound() public {
-        factory.boundDeploy(address(this));
     }
 
     function _setBoundBaseTokenURI(string memory uri) internal {
@@ -39,14 +35,15 @@ abstract contract EIP5058Bound is ERC721Lockable {
     ) internal virtual override {
         super._afterTokenLock(operator, from, tokenId, expired);
 
-        IERC721Bound bound = IERC721Bound(factory.boundOf(address(this)));
         if (expired != 0) {
             // lock mint
             if (operator != address(0)) {
+                IERC721Bound bound = IERC721Bound(factory.boundOf(address(this)));
                 bound.safeMint(msg.sender, tokenId, "");
             }
         } else {
             // unlock
+            IERC721Bound bound = IERC721Bound(factory.boundOf(address(this)));
             if (bound.exists(tokenId)) {
                 bound.burn(tokenId);
             }
