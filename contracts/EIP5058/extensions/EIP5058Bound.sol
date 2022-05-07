@@ -8,7 +8,7 @@ import "../factory/IERC721Bound.sol";
 import "../ERC721Lockable.sol";
 
 abstract contract EIP5058Bound is ERC721Lockable {
-    IEIP5058Factory public immutable factory;
+    IEIP5058Factory public factory;
 
     constructor(address _factory) {
         factory = IEIP5058Factory(_factory);

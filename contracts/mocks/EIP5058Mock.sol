@@ -12,14 +12,6 @@ contract EIP5058Mock is ERC721Enumerable, ERC721Lockable {
         return _exists(tokenId);
     }
 
-    function safeMint(
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    ) external {
-        _safeMint(to, tokenId, data);
-    }
-
     function lockMint(
         address to,
         uint256 tokenId,

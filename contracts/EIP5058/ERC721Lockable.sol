@@ -4,13 +4,12 @@
 pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "./IERC721Lockable.sol";
 
 /**
  * @dev Implementation ERC721 Lockable Token
  */
-abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
+abstract contract ERC721Lockable is ERC721, IERC721Lockable {
     // Default unlock time is 0, it means unlocked, set type(uint256).max to lock forever.
     // Mapping from token ID to unlock time
     mapping(uint256 => uint256) public lockedTokens;
