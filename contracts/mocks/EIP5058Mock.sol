@@ -3,14 +3,10 @@
 pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "./EIP5058/extensions/EIP5058Bound.sol";
+import "../EIP5058/ERC721Lockable.sol";
 
-contract EIP5058Mock is Context, ERC721Enumerable, EIP5058Bound {
-    constructor(
-        string memory name,
-        string memory symbol,
-        address mutantFactory
-    ) ERC721(name, symbol) EIP5058Bound(mutantFactory) {}
+contract EIP5058Mock is ERC721Enumerable, ERC721Lockable {
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     function exists(uint256 tokenId) public view returns (bool) {
         return _exists(tokenId);
@@ -24,28 +20,11 @@ contract EIP5058Mock is Context, ERC721Enumerable, EIP5058Bound {
         _safeMint(to, tokenId, data);
     }
 
-    // NOTE
-    //
-    // use timestamp here when the isLocked condition use block number
     function lockMint(
         address to,
         uint256 tokenId,
-        uint256 duration
+        uint256 expired
     ) external {
-        uint256 expired = 0;
-        // if (duration == 0) {
-        //     expired = type(uint256).max;
-        // } else {
-        //     unchecked {
-        //         expired = duration + block.timestamp;
-        //     }
-        // }
-        if (duration == 0) {
-            expired = block.number;
-        } else {
-            expired = duration;
-        }
-
         _safeLockMint(to, tokenId, expired, "");
     }
 

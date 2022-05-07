@@ -30,7 +30,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         require(to != owner, "ERC721L: lock approval to current owner");
 
         require(
-            _msgSender() == owner || isApprovedForAll(owner, _msgSender()),
+            _msgSender() == owner || isLockApprovedForAll(owner, _msgSender()),
             "ERC721L: lock approve caller is not owner nor approved for all"
         );
 

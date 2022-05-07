@@ -1,0 +1,164 @@
+import "@nomiclabs/hardhat-ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expect } from "chai";
+import { ethers } from "hardhat";
+import { EIP5058BoundMock, ERC721Bound } from "typechain-types";
+
+describe("EIP5058Bound contract", function () {
+  let owner: SignerWithAddress;
+  let alice: SignerWithAddress;
+  let EIP5058Bound: EIP5058BoundMock;
+  let NFTBound : ERC721Bound;
+
+  beforeEach(async () => {
+    [owner, alice] = await ethers.getSigners();
+
+    const FF = await ethers.getContractFactory("EIP5058Factory");
+    const Factory = await FF.deploy();
+
+    const EIP5058BoundFactory = await ethers.getContractFactory("EIP5058BoundMock");
+
+    EIP5058Bound = await EIP5058BoundFactory.deploy("Mock", "M", Factory.address);
+
+    await Factory.boundDeploy(EIP5058Bound.address);
+  
+    NFTBound = await ethers.getContractAt("ERC721Bound", await Factory.boundOf(EIP5058Bound.address));
+  });
+  
+  it("Deployment should assign the total supply of tokens to the owner", async function() {
+    const ownerBalance = await EIP5058Bound.balanceOf(owner.address);
+    expect(await EIP5058Bound.totalSupply()).to.equal(ownerBalance);
+  });
+  
+  it("lockMint works", async function() {
+    const NFTId = 0;
+    const block = await ethers.provider.getBlockNumber();
+    await EIP5058Bound.lockMint(alice.address, NFTId, block + 2);
+    
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
+    expect(await EIP5058Bound.lockerOf(NFTId)).eq(owner.address);
+    expect(await EIP5058Bound.lockerOf(NFTId)).eq(owner.address);
+    expect(await EIP5058Bound.tokenURI(NFTId)).eq(await NFTBound.tokenURI(NFTId));
+  });
+  
+  it("Can not transfer when token is locked", async function() {
+    const NFTId = 0;
+    const block = await ethers.provider.getBlockNumber();
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3);
+    
+    // can not transfer when token is locked
+    await expect(EIP5058Bound.transferFrom(owner.address, alice.address, NFTId)).to.be.revertedWith(
+      "ERC721L: token transfer while locked",
+    );
+    
+    // can transfer when token is unlocked
+    await ethers.provider.send("evm_mine", []);
+    await EIP5058Bound.transferFrom(owner.address, alice.address, NFTId);
+    expect(await EIP5058Bound.ownerOf(NFTId)).eq(alice.address);
+  });
+  
+  it("isLocked works", async function() {
+    const NFTId = 0;
+    const block = await ethers.provider.getBlockNumber();
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 2);
+    
+    // isLocked works
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
+    await ethers.provider.send("evm_mine", []);
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(false);
+  });
+  
+  it("lockFrom works", async function() {
+    const NFTId = 0;
+    let block = await ethers.provider.getBlockNumber();
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3);
+    
+    await expect(EIP5058Bound.lockFrom(owner.address, NFTId, block + 5)).to.be.revertedWith(
+      "ERC721L: token is locked",
+    );
+    
+    await ethers.provider.send("evm_mine", []);
+    await EIP5058Bound.lockFrom(owner.address, NFTId, block + 5);
+  });
+  
+  it("unlockFrom works with lockMint", async function() {
+    const NFTId = 0;
+    const block = await ethers.provider.getBlockNumber()
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3);
+    
+    // unlock works
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
+    expect(await EIP5058Bound.lockerOf(NFTId)).eq(owner.address);
+    await EIP5058Bound.unlockFrom(owner.address, NFTId);
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(false);
+  });
+  
+  it("unlockFrom works", async function() {
+    const NFTId = 0;
+    
+    await EIP5058Bound.mint(owner.address, NFTId);
+    
+    await expect(EIP5058Bound.unlockFrom(owner.address, NFTId)).to.be.revertedWith(
+      "ERC721L: locker query for non-locked token",
+    );
+    const block = await ethers.provider.getBlockNumber();
+    await EIP5058Bound.lockFrom(owner.address, NFTId, block + 3);
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
+    await EIP5058Bound.unlockFrom(owner.address, NFTId);
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(false);
+  });
+  
+  it("lockApprove works", async function() {
+    const NFTId = 0;
+    await EIP5058Bound.mint(alice.address, NFTId);
+    
+    let block = await ethers.provider.getBlockNumber();
+    await expect(EIP5058Bound.lockFrom(owner.address, NFTId, block + 2)).to.be.revertedWith(
+      "ERC721L: lock caller is not owner nor approved",
+    );
+    
+    await EIP5058Bound.connect(alice).lockApprove(owner.address, NFTId);
+    expect(await EIP5058Bound.getLockApproved(NFTId)).eq(owner.address);
+    
+    await expect(EIP5058Bound.lockFrom(owner.address, NFTId, block + 4)).to.be.revertedWith(
+      "ERC721L: lock from incorrect owner",
+    );
+    await EIP5058Bound.lockFrom(alice.address, NFTId, block + 6);
+    expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
+    
+    await expect(EIP5058Bound.lockApprove(alice.address, NFTId)).to.be.revertedWith(
+      "ERC721L: token is locked",
+    );
+  });
+  
+  it("setLockApproveForAll works", async function() {
+    const NFTId = 0;
+    
+    await EIP5058Bound.mint(alice.address, NFTId);
+    const block = await ethers.provider.getBlockNumber();
+    await expect(EIP5058Bound.lockFrom(alice.address, NFTId, block + 2)).to.be.revertedWith(
+      "ERC721L: lock caller is not owner nor approved",
+    );
+    
+    await EIP5058Bound.connect(alice).setLockApprovalForAll(owner.address, true);
+    expect(await EIP5058Bound.isLockApprovedForAll(alice.address, owner.address)).eq(true);
+    
+    await EIP5058Bound.lockFrom(alice.address, NFTId, block + 6);
+    
+    await EIP5058Bound.connect(alice).setLockApprovalForAll(owner.address, false);
+    expect(await EIP5058Bound.isLockApprovedForAll(alice.address, owner.address)).eq(false);
+  });
+  
+  it("burn works", async function() {
+    const NFTId = 0;
+    
+    await EIP5058Bound.mint(owner.address, NFTId);
+    const block = await ethers.provider.getBlockNumber();
+    await EIP5058Bound.lockFrom(owner.address, NFTId, block + 2);
+  
+    await ethers.provider.send("evm_mine", []);
+    expect(await NFTBound.exists(NFTId)).eq(true);
+    await EIP5058Bound.burn( NFTId);
+    expect(await NFTBound.exists(NFTId)).eq(false);
+  });
+});
