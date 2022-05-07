@@ -12,6 +12,8 @@ interface IEIP5058Factory {
 
     function mutantOf(address preimage, bytes32 salt) external view returns (address);
 
+    function existBound(address preimage) external view returns (bool);
+
     function boundOf(address preimage) external view returns (address);
 
     function boundDeploy(address preimage) external returns (address);

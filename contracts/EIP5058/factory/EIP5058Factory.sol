@@ -27,6 +27,10 @@ contract EIP5058Factory is IEIP5058Factory {
         return _mutants[preimage][index];
     }
 
+    function existBound(address preimage) public view virtual override returns (bool) {
+        return mutantOf(preimage, keccak256(abi.encode(preimage))) != address(0);
+    }
+
     function boundOf(address preimage) public view virtual override returns (address) {
         address bound = mutantOf(preimage, keccak256(abi.encode(preimage)));
         require(bound != address(0), "EIP5058Factory: query for nonexistent bound");

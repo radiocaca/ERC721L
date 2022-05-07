@@ -51,15 +51,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      */
     function lockerOf(uint256 tokenId) public view virtual override returns (address) {
         require(_exists(tokenId), "ERC721L: locker query for nonexistent token");
-        // NOTE
-        //
-        // why empty address?
-        //
-        // if return empty address it will be impossible to do `unlockFrom` anymore
-        // which
-        //  - will throw a wrong error message
-        //  - only delete the kv in the mapping
-        if (!isLocked(tokenId)) return address(0);
+        require(isLocked(tokenId), "ERC721L: locker query for non-locked token");
 
         return _lockApprovals[tokenId];
     }
@@ -85,10 +77,6 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         return lockedTokens[tokenId] > block.number;
     }
 
-    // NOTE:
-    //
-    // This method is not abled to be called on token minted by `mint`
-    // since `_beforeTokenTransfer` in `_beforeTokenLock` will prevent this.
     /**
      * @dev See {IERC721Lockable-lockFrom}.
      */
@@ -102,17 +90,9 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         require(expired > block.number, "ERC721L: expired time must be greater than current block number");
         require(!isLocked(tokenId), "ERC721L: token is locked");
 
-        _beforeTokenLock(from, tokenId, expired);
-
-        _lock(from, tokenId, expired);
-
-        _afterTokenLock(from, tokenId, expired);
+        _lock(_msgSender(), from, tokenId, expired);
     }
 
-    // NOTE:
-    //
-    // this function is useless, `delete lockedTokens[tokenId]` or not,
-    // doesn't make sense to the result of `isLocked`
     /**
      * @dev See {IERC721Lockable-unlockFrom}.
      */
@@ -120,13 +100,13 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
         require(lockerOf(tokenId) == _msgSender(), "ERC721L: unlock caller is not lock operator");
         require(ERC721.ownerOf(tokenId) == from, "ERC721L: unlock from incorrect owner");
 
-        _beforeTokenLock(from, tokenId, 0);
+        _beforeTokenLock(_msgSender(), from, tokenId, 0);
 
         delete lockedTokens[tokenId];
 
         emit Unlocked(_msgSender(), from, tokenId);
 
-        _afterTokenLock(from, tokenId, 0);
+        _afterTokenLock(_msgSender(), from, tokenId, 0);
     }
 
     /**
@@ -139,16 +119,21 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      * Emits a {Locked} event.
      */
     function _lock(
+        address operator,
         address from,
         uint256 tokenId,
         uint256 expired
     ) internal virtual {
         require(ERC721.ownerOf(tokenId) == from, "ERC721L: lock from incorrect owner");
 
+        _beforeTokenLock(operator, from, tokenId, expired);
+
         lockedTokens[tokenId] = expired;
         _lockApprovals[tokenId] = _msgSender();
 
-        emit Locked(_msgSender(), from, tokenId, expired);
+        emit Locked(operator, from, tokenId, expired);
+
+        _afterTokenLock(operator, from, tokenId, expired);
     }
 
     /**
@@ -170,21 +155,23 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
 
         _safeMint(to, tokenId, _data);
 
-        lockedTokens[tokenId] = expired;
-        _lockApprovals[tokenId] = _msgSender();
-
-        emit Locked(_msgSender(), to, tokenId, expired);
+        _lock(address(0), to, tokenId, expired);
     }
 
     /**
      * @dev See {ERC721-_burn}. This override additionally clears the lock approvals for the token.
      */
     function _burn(uint256 tokenId) internal virtual override {
+        address owner = ERC721.ownerOf(tokenId);
         super._burn(tokenId);
+
+        _beforeTokenLock(_msgSender(), owner, tokenId, 0);
 
         // clear lock approvals
         delete lockedTokens[tokenId];
         delete _lockApprovals[tokenId];
+
+        _afterTokenLock(_msgSender(), owner, tokenId, 0);
     }
 
     /**
@@ -257,6 +244,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      *
      */
     function _beforeTokenLock(
+        address operator,
         address from,
         uint256 tokenId,
         uint256 expired
@@ -273,6 +261,7 @@ abstract contract ERC721Lockable is Context, ERC721, IERC721Lockable {
      *
      */
     function _afterTokenLock(
+        address operator,
         address from,
         uint256 tokenId,
         uint256 expired

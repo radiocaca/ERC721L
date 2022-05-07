@@ -144,9 +144,6 @@ contract ERC721Bound is ERC721Enumerable, IERC2981, IERC721Bound {
         _burn(tokenId);
     }
 
-    // this function triggers when mint
-    //
-    // this will prevent users do `lockFrom` since there is also a mint transaction in _beforeTokenLock
     /**
      * @dev See {ERC721-_beforeTokenTransfer}.
      */
@@ -157,9 +154,10 @@ contract ERC721Bound is ERC721Enumerable, IERC2981, IERC721Bound {
     ) internal virtual override {
         super._beforeTokenTransfer(from, to, tokenId);
 
-        if (to != address(0)) {
-            require(IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token transfer while preimage not locked");
-        } else {
+        if (from == address(0)) {
+            require(IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token mint while preimage not locked");
+        }
+        if (to == address(0)) {
             require(!IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token burn while preimage locked");
         }
     }
