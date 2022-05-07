@@ -173,6 +173,7 @@ contract ERC721Bound is ERC721Enumerable, IERC2981, IERC721Bound {
         returns (bool)
     {
         return
+            interfaceId == type(IERC721Bound).interfaceId ||
             interfaceId == type(IERC2981).interfaceId ||
             interfaceId == IPreimage.contractURI.selector ||
             super.supportsInterface(interfaceId);

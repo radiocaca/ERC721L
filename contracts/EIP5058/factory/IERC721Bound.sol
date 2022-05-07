@@ -3,7 +3,9 @@
 
 pragma solidity ^0.8.8;
 
-interface IERC721Bound {
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+interface IERC721Bound is IERC721 {
     function preimage() external view returns (address);
 
     function contractURI() external view returns (string memory);

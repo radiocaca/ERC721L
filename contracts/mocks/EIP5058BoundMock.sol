@@ -9,8 +9,8 @@ contract EIP5058BoundMock is ERC721Enumerable, EIP5058Bound {
     constructor(
         string memory name,
         string memory symbol,
-        address mutantFactory
-    ) ERC721(name, symbol) EIP5058Bound(mutantFactory) {}
+        address boundFactory
+    ) ERC721(name, symbol) EIP5058Bound(boundFactory) {}
 
     function exists(uint256 tokenId) public view returns (bool) {
         return _exists(tokenId);

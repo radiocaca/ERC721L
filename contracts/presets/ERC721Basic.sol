@@ -32,13 +32,8 @@ contract ERC721Basic is
         string memory name,
         string memory symbol,
         address redeemProof,
-        address mutantFactory
-    )
-        ERC721(name, symbol)
-        BaseTokenURI("")
-        EIP5058Bound(mutantFactory)
-        ERC721Redeemable(IERC721(redeemProof), 2000, 2)
-    {
+        address boundFactory
+    ) ERC721(name, symbol) BaseTokenURI("") EIP5058Bound(boundFactory) ERC721Redeemable(IERC721(redeemProof), 2000, 2) {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
         _grantRole(BURNER_ROLE, _msgSender());

@@ -14,16 +14,18 @@ abstract contract EIP5058Bound is ERC721Lockable {
         factory = IEIP5058Factory(_factory);
     }
 
-    function _setBoundBaseTokenURI(string memory uri) internal {
-        address bound = factory.boundOf(address(this));
+    function DeployBound() public {
+        factory.boundDeploy(address(this));
+    }
 
-        IERC721Bound(bound).setBaseTokenURI(uri);
+    function _setBoundBaseTokenURI(string memory uri) internal {
+        IERC721Bound bound = IERC721Bound(factory.boundOf(address(this)));
+        bound.setBaseTokenURI(uri);
     }
 
     function _setBoundContractURI(string memory uri) internal {
-        address bound = factory.boundOf(address(this));
-
-        IERC721Bound(bound).setContractURI(uri);
+        IERC721Bound bound = IERC721Bound(factory.boundOf(address(this)));
+        bound.setContractURI(uri);
     }
 
     // NOTE:
@@ -37,17 +39,16 @@ abstract contract EIP5058Bound is ERC721Lockable {
     ) internal virtual override {
         super._afterTokenLock(operator, from, tokenId, expired);
 
+        IERC721Bound bound = IERC721Bound(factory.boundOf(address(this)));
         if (expired != 0) {
             // lock mint
             if (operator != address(0)) {
-                address bound = factory.boundOf(address(this));
-                IERC721Bound(bound).safeMint(msg.sender, tokenId, "");
+                bound.safeMint(msg.sender, tokenId, "");
             }
         } else {
             // unlock
-            address bound = factory.boundOf(address(this));
-            if (IERC721Bound(bound).exists(tokenId)) {
-                IERC721Bound(bound).burn(tokenId);
+            if (bound.exists(tokenId)) {
+                bound.burn(tokenId);
             }
         }
     }
