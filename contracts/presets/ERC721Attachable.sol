@@ -208,6 +208,8 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         require(isSlaveCollection(msg.sender), "ERC721Attachable: slave to non boundERC721 receiver");
 
         if (to != address(0)) {
+            require(ownerOf(tokenId) == to, "ERC721Attachable: slave to incorrect owner");
+
             _slaveTokenIndex[msg.sender][boundTokenId] = _masterTokens[tokenId].length;
 
             _masterTokens[tokenId].push(BoundToken(msg.sender, boundTokenId));
