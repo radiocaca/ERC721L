@@ -12,7 +12,7 @@ Implement: [EIP-5058](https://github.com/ethereum/EIPs/pull/5058/files)
 - Multiple tokenURI management
 - Contract URI
 - Tokens withdrawal within the contract
-- Bound NFT (TODO)
+- Bound NFT
 
 ## Testing
 
