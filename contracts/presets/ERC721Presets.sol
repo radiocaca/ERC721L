@@ -60,17 +60,8 @@ contract ERC721Presets is
     function lockMint(
         address to,
         uint256 tokenId,
-        uint256 duration
+        uint256 expired
     ) external onlyRole(MINTER_ROLE) {
-        uint256 expired = 0;
-        if (duration == 0) {
-            expired = type(uint256).max;
-        } else {
-            unchecked {
-                expired = duration + block.number;
-            }
-        }
-
         _safeLockMint(to, tokenId, expired, "");
     }
 

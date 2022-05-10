@@ -48,17 +48,8 @@ contract MPBV2 is
     function lockMint(
         address to,
         uint256 tokenId,
-        uint256 duration
+        uint256 expired
     ) external onlyRole(MINTER_ROLE) {
-        uint256 expired = 0;
-        if (duration == 0) {
-            expired = type(uint256).max;
-        } else {
-            unchecked {
-                expired = duration + block.number;
-            }
-        }
-
         _safeLockMint(to, tokenId, expired, "");
     }
 
@@ -74,7 +65,9 @@ contract MPBV2 is
 
     function burn(uint256 tokenId) external {
         require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || hasRole(BURNER_ROLE, _msgSender()),
+            _isApprovedOrOwner(_msgSender(), tokenId) ||
+                hasRole(BURNER_ROLE, _msgSender()) ||
+                masterOf(tokenId) == msg.sender,
             "ERC721: caller is not owner nor approved"
         );
 
@@ -109,6 +102,10 @@ contract MPBV2 is
 
     function setRoleAdmin(bytes32 roleId, bytes32 adminRoleId) external onlyOwner {
         _setRoleAdmin(roleId, adminRoleId);
+    }
+
+    function setFactory(address factory) external onlyOwner {
+        _setFactory(factory);
     }
 
     function setDefaultRoyaltyInfo(address receiver, uint96 feeNumerator) external onlyOwner {
