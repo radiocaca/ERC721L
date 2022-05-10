@@ -9,9 +9,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "../EIP5058/extensions/EIP5058Bound.sol";
-import "./ERC721Attachable.sol";
-import "./ERC721Redeemable.sol";
-import "./TokenWithdraw.sol";
+import "../utils/ERC721Attachable.sol";
+import "../utils/ERC721Redeemable.sol";
+import "../utils/TokenWithdraw.sol";
 
 contract ERC721Basic is
     BaseTokenURI,

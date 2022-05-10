@@ -3,7 +3,7 @@
 pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "./ERC721Attachable.sol";
+import "../utils/ERC721Attachable.sol";
 
 contract ERC721AttachableMock is ERC721Enumerable, ERC721Attachable {
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {}

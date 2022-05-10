@@ -21,6 +21,9 @@ interface IERC721Burnable {
     function burn(uint256 tokenId) external;
 }
 
+// @dev The implementation is to bind the NFT (master) and its airdrop NFT (slave).
+// The airdrop NFT cannot be transferred or sold separately.
+// The slave nfts will be transferred or sold with the master nft.
 abstract contract ERC721Attachable is Ownable, ERC721 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -38,6 +41,7 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
 
     EnumerableSet.AddressSet private _slaveCollections;
 
+    // Grant the specified address the permission to transfer slave nft for airdrop NFT deposit into the game contract.
     EnumerableSet.AddressSet private _transferApprovals;
 
     event CollectionRemoved(address indexed collection);

@@ -6,24 +6,20 @@ import "@divergencetech/ethier/contracts/erc721/BaseTokenURI.sol";
 import "@divergencetech/ethier/contracts/utils/OwnerPausable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "../EIP5058/extensions/EIP5058Bound.sol";
-import "../utils/ERC721Redeemable.sol";
 import "../utils/ERC721Attachable.sol";
 import "../utils/TokenWithdraw.sol";
 
-contract ERC721Presets is
+contract MPBV2 is
     Context,
     OwnerPausable,
     BaseTokenURI,
     ERC721Enumerable,
-    ERC721URIStorage,
     ERC721Pausable,
     EIP5058Bound,
     ERC721Attachable,
-    ERC721Redeemable,
     ERC721Royalty,
     AccessControlEnumerable,
     TokenWithdraw
@@ -31,15 +27,7 @@ contract ERC721Presets is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    uint256 public constant MAX_SUPPLY = 10000;
-
-    constructor(
-        string memory name,
-        string memory symbol,
-        address payable royaltyReceiver
-    ) ERC721(name, symbol) BaseTokenURI("") {
-        _setDefaultRoyalty(royaltyReceiver, 500);
-
+    constructor() ERC721("Matrix Plus Box", "MPB") BaseTokenURI("https://api.bakeryswap.org/nft/matrix-plus-box/") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
         _grantRole(BURNER_ROLE, _msgSender());
@@ -81,16 +69,6 @@ contract ERC721Presets is
     function mintBatch(address to, uint256[] calldata tokenIds) external onlyRole(MINTER_ROLE) {
         for (uint256 i = 0; i <= tokenIds.length; i++) {
             _mint(to, tokenIds[i]);
-        }
-    }
-
-    function mintRange(
-        address to,
-        uint256 fromId,
-        uint256 toId
-    ) external onlyRole(MINTER_ROLE) {
-        for (uint256 i = fromId; i <= toId; i++) {
-            _mint(to, i);
         }
     }
 
@@ -153,29 +131,11 @@ contract ERC721Presets is
         _resetTokenRoyalty(tokenId);
     }
 
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) external onlyOwner {
-        _setTokenURI(tokenId, _tokenURI);
-    }
-
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
-
     function _baseURI() internal view override(BaseTokenURI, ERC721) returns (string memory) {
         return BaseTokenURI._baseURI();
     }
 
-    function _mint(address to, uint256 tokenId) internal virtual override {
-        super._mint(to, tokenId);
-
-        assert(totalSupply() <= MAX_SUPPLY);
-    }
-
-    function _burn(uint256 tokenId)
-        internal
-        virtual
-        override(ERC721, ERC721Royalty, ERC721URIStorage, ERC721Lockable, ERC721Attachable)
-    {
+    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721Royalty, ERC721Lockable, ERC721Attachable) {
         super._burn(tokenId);
     }
 
