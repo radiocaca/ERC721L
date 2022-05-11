@@ -33,7 +33,7 @@ contract MPBV2 is
         _grantRole(BURNER_ROLE, _msgSender());
     }
 
-    function exists(uint256 tokenId) public view returns (bool) {
+    function exists(uint256 tokenId) external view returns (bool) {
         return _exists(tokenId);
     }
 
@@ -48,9 +48,10 @@ contract MPBV2 is
     function lockMint(
         address to,
         uint256 tokenId,
-        uint256 expired
+        uint256 expired,
+        bytes memory data
     ) external onlyRole(MINTER_ROLE) {
-        _safeLockMint(to, tokenId, expired, "");
+        _safeLockMint(to, tokenId, expired, data);
     }
 
     function mint(address to, uint256 tokenId) external onlyRole(MINTER_ROLE) {
@@ -77,7 +78,7 @@ contract MPBV2 is
         require(
             _isApprovedOrOwner(_msgSender(), tokenId) ||
                 hasRole(BURNER_ROLE, _msgSender()) ||
-                masterOf(tokenId) == msg.sender,
+                masterOf(tokenId) == _msgSender(),
             "ERC721: caller is not owner nor approved"
         );
 

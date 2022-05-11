@@ -12,9 +12,9 @@ describe("ERC721Lockable contract", function() {
   beforeEach(async () => {
     [owner, alice] = await ethers.getSigners();
     
-    const EIP5058Factory = await ethers.getContractFactory("EIP5058Mock");
+    const ERC5058Factory = await ethers.getContractFactory("EIP5058Mock");
     
-    EIP5058 = await EIP5058Factory.deploy("Mock", "M");
+    EIP5058 = await ERC5058Factory.deploy("Mock", "M");
   });
   
   it("Deployment should assign the total supply of tokens to the owner", async function() {
@@ -38,7 +38,7 @@ describe("ERC721Lockable contract", function() {
     
     // can not transfer when token is locked
     await expect(EIP5058.transferFrom(owner.address, alice.address, NFTId)).to.be.revertedWith(
-      "ERC721L: token transfer while locked",
+      "ERC5058: token transfer while locked",
     );
     
     // can transfer when token is unlocked
@@ -64,7 +64,7 @@ describe("ERC721Lockable contract", function() {
     await EIP5058.lockMint(owner.address, NFTId, block + 3);
     
     await expect(EIP5058.lockFrom(owner.address, NFTId, block + 5)).to.be.revertedWith(
-      "ERC721L: token is locked",
+      "ERC5058: token is locked",
     );
     
     await ethers.provider.send("evm_mine", []);
@@ -89,7 +89,7 @@ describe("ERC721Lockable contract", function() {
     await EIP5058.mint(owner.address, NFTId);
 
     await expect(EIP5058.unlockFrom(owner.address, NFTId)).to.be.revertedWith(
-      "ERC721L: locker query for non-locked token",
+      "ERC5058: locker query for non-locked token",
     );
     const block = await ethers.provider.getBlockNumber();
     await EIP5058.lockFrom(owner.address, NFTId, block + 3);
@@ -104,20 +104,20 @@ describe("ERC721Lockable contract", function() {
   
     let block = await ethers.provider.getBlockNumber();
     await expect(EIP5058.lockFrom(owner.address, NFTId, block + 2)).to.be.revertedWith(
-      "ERC721L: lock caller is not owner nor approved",
+      "ERC5058: lock caller is not owner nor approved",
     );
     
     await EIP5058.connect(alice).lockApprove(owner.address, NFTId);
     expect(await EIP5058.getLockApproved(NFTId)).eq(owner.address);
   
     await expect(EIP5058.lockFrom(owner.address, NFTId, block + 4)).to.be.revertedWith(
-      "ERC721L: lock from incorrect owner",
+      "ERC5058: lock from incorrect owner",
     );
     await EIP5058.lockFrom(alice.address, NFTId, block + 6);
     expect(await EIP5058.isLocked(NFTId)).eq(true);
   
     await expect(EIP5058.lockApprove(alice.address, NFTId)).to.be.revertedWith(
-      "ERC721L: token is locked",
+      "ERC5058: token is locked",
     );
   });
   
@@ -127,7 +127,7 @@ describe("ERC721Lockable contract", function() {
     await EIP5058.mint(alice.address, NFTId);
     const block = await ethers.provider.getBlockNumber();
     await expect(EIP5058.lockFrom(alice.address, NFTId, block + 2)).to.be.revertedWith(
-      "ERC721L: lock caller is not owner nor approved",
+      "ERC5058: lock caller is not owner nor approved",
     );
 
     await EIP5058.connect(alice).setLockApprovalForAll(owner.address, true);

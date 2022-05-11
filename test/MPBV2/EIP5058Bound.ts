@@ -13,7 +13,7 @@ describe("MPB EIP5058Bound contract", function () {
   beforeEach(async () => {
     [owner, alice] = await ethers.getSigners();
 
-    const FF = await ethers.getContractFactory("EIP5058Factory");
+    const FF = await ethers.getContractFactory("ERC5058Factory");
     const Factory = await FF.deploy();
 
     const EIP5058BoundFactory = await ethers.getContractFactory("MPBV2");
@@ -34,7 +34,7 @@ describe("MPB EIP5058Bound contract", function () {
   it("lockMint works", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058Bound.lockMint(alice.address, NFTId, block + 2);
+    await EIP5058Bound.lockMint(alice.address, NFTId, block + 2, "0x");
 
     expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
     expect(await EIP5058Bound.lockerOf(NFTId)).eq(owner.address);
@@ -45,11 +45,11 @@ describe("MPB EIP5058Bound contract", function () {
   it("Can not transfer when token is locked", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3);
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3, "0x");
 
     // can not transfer when token is locked
     await expect(EIP5058Bound.transferFrom(owner.address, alice.address, NFTId)).to.be.revertedWith(
-      "ERC721L: token transfer while locked",
+      "ERC5058: token transfer while locked",
     );
 
     // can transfer when token is unlocked
@@ -61,7 +61,7 @@ describe("MPB EIP5058Bound contract", function () {
   it("isLocked works", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058Bound.lockMint(owner.address, NFTId, block + 2);
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 2, "0x");
 
     // isLocked works
     expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
@@ -72,10 +72,10 @@ describe("MPB EIP5058Bound contract", function () {
   it("lockFrom works", async function() {
     const NFTId = 0;
     let block = await ethers.provider.getBlockNumber();
-    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3);
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3, "0x");
 
     await expect(EIP5058Bound.lockFrom(owner.address, NFTId, block + 5)).to.be.revertedWith(
-      "ERC721L: token is locked",
+      "ERC5058: token is locked",
     );
 
     await ethers.provider.send("evm_mine", []);
@@ -85,7 +85,7 @@ describe("MPB EIP5058Bound contract", function () {
   it("unlockFrom works with lockMint", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber()
-    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3);
+    await EIP5058Bound.lockMint(owner.address, NFTId, block + 3, "0x");
 
     // unlock works
     expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
@@ -100,7 +100,7 @@ describe("MPB EIP5058Bound contract", function () {
     await EIP5058Bound.mint(owner.address, NFTId);
 
     await expect(EIP5058Bound.unlockFrom(owner.address, NFTId)).to.be.revertedWith(
-      "ERC721L: locker query for non-locked token",
+      "ERC5058: locker query for non-locked token",
     );
     const block = await ethers.provider.getBlockNumber();
     await EIP5058Bound.lockFrom(owner.address, NFTId, block + 3);
@@ -115,20 +115,20 @@ describe("MPB EIP5058Bound contract", function () {
 
     let block = await ethers.provider.getBlockNumber();
     await expect(EIP5058Bound.lockFrom(owner.address, NFTId, block + 2)).to.be.revertedWith(
-      "ERC721L: lock caller is not owner nor approved",
+      "ERC5058: lock caller is not owner nor approved",
     );
 
     await EIP5058Bound.connect(alice).lockApprove(owner.address, NFTId);
     expect(await EIP5058Bound.getLockApproved(NFTId)).eq(owner.address);
 
     await expect(EIP5058Bound.lockFrom(owner.address, NFTId, block + 4)).to.be.revertedWith(
-      "ERC721L: lock from incorrect owner",
+      "ERC5058: lock from incorrect owner",
     );
     await EIP5058Bound.lockFrom(alice.address, NFTId, block + 6);
     expect(await EIP5058Bound.isLocked(NFTId)).eq(true);
 
     await expect(EIP5058Bound.lockApprove(alice.address, NFTId)).to.be.revertedWith(
-      "ERC721L: token is locked",
+      "ERC5058: token is locked",
     );
   });
 
@@ -138,7 +138,7 @@ describe("MPB EIP5058Bound contract", function () {
     await EIP5058Bound.mint(alice.address, NFTId);
     const block = await ethers.provider.getBlockNumber();
     await expect(EIP5058Bound.lockFrom(alice.address, NFTId, block + 2)).to.be.revertedWith(
-      "ERC721L: lock caller is not owner nor approved",
+      "ERC5058: lock caller is not owner nor approved",
     );
 
     await EIP5058Bound.connect(alice).setLockApprovalForAll(owner.address, true);
