@@ -2,6 +2,7 @@ import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
+require('@openzeppelin/hardhat-upgrades');
 
 const { config } = require("dotenv");
 const { resolve } = require("path");
