@@ -75,7 +75,7 @@ contract ERC721Basic is
     }
 
     function mintBatch(address to, uint256[] calldata tokenIds) external onlyRole(MINTER_ROLE) {
-        for (uint256 i = 0; i <= tokenIds.length; i++) {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
             _mint(to, tokenIds[i]);
         }
     }
@@ -85,8 +85,8 @@ contract ERC721Basic is
         uint256 fromId,
         uint256 toId
     ) external onlyRole(MINTER_ROLE) {
-        for (uint256 i = fromId; i <= toId; i++) {
-            _mint(to, i);
+        for (; fromId <= toId; fromId++) {
+            _mint(to, fromId);
         }
     }
 
