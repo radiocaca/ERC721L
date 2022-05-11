@@ -22,6 +22,10 @@ abstract contract EIP5058Bound is ERC721Lockable {
         IERC721Bound(bound).setContractURI(uri);
     }
 
+    function burnBound(uint256 tokenId) external {
+        IERC721Bound(bound).burn(tokenId);
+    }
+
     // NOTE:
     //
     // this will be called when `lockFrom` or `unlockFrom`

@@ -156,9 +156,10 @@ contract ERC721Bound is ERC721Enumerable, IERC2981, IERC721Bound {
 
         if (from == address(0)) {
             require(IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token mint while preimage not locked");
-        }
-        if (to == address(0)) {
+        } else if (to == address(0)) {
             require(!IPreimage(_preimage).isLocked(tokenId), "ERC721Bound: token burn while preimage locked");
+        } else {
+            revert("ERC721Bound: transfer not supported");
         }
     }
 
