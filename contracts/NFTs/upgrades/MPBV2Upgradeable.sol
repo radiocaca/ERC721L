@@ -1,33 +1,35 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.0;
 
-import "@divergencetech/ethier/contracts/erc721/BaseTokenURI.sol";
-import "@divergencetech/ethier/contracts/utils/OwnerPausable.sol";
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
-import "../EIP5058/extensions/ERC5058Bound.sol";
-import "../utils/ERC721Attachable.sol";
-import "../utils/TokenWithdraw.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721RoyaltyUpgradeable.sol";
+import "../../EIP5058Upgradeable/extensions/EIP5058Bound.sol";
+import "../../EIP5058Upgradeable/utils/ERC721Attachable.sol";
+import "../../EIP5058Upgradeable/utils/TokenWithdraw.sol";
 
-contract MPBV2 is
-    Context,
-    OwnerPausable,
-    BaseTokenURI,
-    ERC721Enumerable,
-    ERC721Pausable,
-    ERC5058Bound,
+contract MPBV2Upgradeable is
+    ERC721EnumerableUpgradeable,
+    ERC721PausableUpgradeable,
+    EIP5058Bound,
     ERC721Attachable,
-    ERC721Royalty,
-    AccessControlEnumerable,
+    ERC721RoyaltyUpgradeable,
+    AccessControlEnumerableUpgradeable,
     TokenWithdraw
 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    constructor() ERC721("Matrix Plus Box", "MPB") BaseTokenURI("https://api.bakeryswap.org/nft/matrix-plus-box/") {
+    /// @notice Base token URI used as a prefix by tokenURI().
+    string public baseTokenURI;
+
+    function initialize() external initializer {
+        __ERC721_init("Matrix Plus Box", "MPB");
+
+        baseTokenURI = "https://api.bakeryswap.org/nft/matrix-plus-box/";
+
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
         _grantRole(BURNER_ROLE, _msgSender());
@@ -97,7 +99,7 @@ contract MPBV2 is
         address from,
         address to,
         uint256 tokenId
-    ) public virtual override(ERC721, ERC721Attachable) {
+    ) public virtual override(ERC721Upgradeable, ERC721Attachable) {
         super.transferFrom(from, to, tokenId);
     }
 
@@ -106,8 +108,23 @@ contract MPBV2 is
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public virtual override(ERC721, ERC721Attachable) {
+    ) public virtual override(ERC721Upgradeable, ERC721Attachable) {
         super.safeTransferFrom(from, to, tokenId, _data);
+    }
+
+    /// @notice Pauses the contract.
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    /// @notice Unpauses the contract.
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    /// @notice Sets the base token URI prefix.
+    function setBaseTokenURI(string memory _baseTokenURI) public onlyOwner {
+        baseTokenURI = _baseTokenURI;
     }
 
     function setRoleAdmin(bytes32 roleId, bytes32 adminRoleId) external onlyOwner {
@@ -138,11 +155,15 @@ contract MPBV2 is
         _resetTokenRoyalty(tokenId);
     }
 
-    function _baseURI() internal view override(BaseTokenURI, ERC721) returns (string memory) {
-        return BaseTokenURI._baseURI();
+    function _baseURI() internal view override returns (string memory) {
+        return baseTokenURI;
     }
 
-    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721Royalty, ERC5058, ERC721Attachable) {
+    function _burn(uint256 tokenId)
+        internal
+        virtual
+        override(ERC721Upgradeable, ERC721RoyaltyUpgradeable, ERC721Lockable, ERC721Attachable)
+    {
         super._burn(tokenId);
     }
 
@@ -150,7 +171,11 @@ contract MPBV2 is
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override(ERC721, ERC721Enumerable, ERC721Pausable, ERC5058) {
+    )
+        internal
+        virtual
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721PausableUpgradeable, ERC721Lockable)
+    {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
@@ -158,7 +183,13 @@ contract MPBV2 is
         public
         view
         virtual
-        override(ERC721, ERC721Enumerable, ERC5058, ERC721Royalty, AccessControlEnumerable)
+        override(
+            ERC721Upgradeable,
+            ERC721EnumerableUpgradeable,
+            ERC721Lockable,
+            ERC721RoyaltyUpgradeable,
+            AccessControlEnumerableUpgradeable
+        )
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

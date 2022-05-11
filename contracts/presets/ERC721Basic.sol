@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
-import "../EIP5058/extensions/EIP5058Bound.sol";
+import "../EIP5058/extensions/ERC5058Bound.sol";
 import "../utils/ERC721Attachable.sol";
 import "../utils/ERC721Redeemable.sol";
 import "../utils/TokenWithdraw.sol";
@@ -20,7 +20,7 @@ contract ERC721Basic is
     ERC721Enumerable,
     ERC721Pausable,
     ERC721Royalty,
-    EIP5058Bound,
+    ERC5058Bound,
     ERC721Attachable,
     ERC721Redeemable,
     TokenWithdraw
@@ -143,7 +143,7 @@ contract ERC721Basic is
         return BaseTokenURI._baseURI();
     }
 
-    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721Royalty, ERC721Lockable, ERC721Attachable) {
+    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721Royalty, ERC5058, ERC721Attachable) {
         super._burn(tokenId);
     }
 
@@ -151,7 +151,7 @@ contract ERC721Basic is
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override(ERC721, ERC721Enumerable, ERC721Pausable, ERC721Lockable) {
+    ) internal virtual override(ERC721, ERC721Enumerable, ERC721Pausable, ERC5058) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
@@ -159,7 +159,7 @@ contract ERC721Basic is
         public
         view
         virtual
-        override(AccessControlEnumerable, ERC721, ERC721Enumerable, ERC721Royalty, ERC721Lockable)
+        override(AccessControlEnumerable, ERC721, ERC721Enumerable, ERC721Royalty, ERC5058)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

@@ -3,9 +3,9 @@
 pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "../EIP5058/extensions/EIP5058Bound.sol";
+import "../EIP5058/extensions/ERC5058Bound.sol";
 
-contract EIP5058BoundMock is ERC721Enumerable, EIP5058Bound {
+contract EIP5058BoundMock is ERC721Enumerable, ERC5058Bound {
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     function exists(uint256 tokenId) public view returns (bool) {
@@ -34,7 +34,7 @@ contract EIP5058BoundMock is ERC721Enumerable, EIP5058Bound {
         _burn(tokenId);
     }
 
-    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721Lockable) {
+    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC5058) {
         super._burn(tokenId);
     }
 
@@ -42,7 +42,7 @@ contract EIP5058BoundMock is ERC721Enumerable, EIP5058Bound {
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override(ERC721Enumerable, ERC721Lockable) {
+    ) internal virtual override(ERC721Enumerable, ERC5058) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
@@ -50,7 +50,7 @@ contract EIP5058BoundMock is ERC721Enumerable, EIP5058Bound {
         public
         view
         virtual
-        override(ERC721Enumerable, ERC721Lockable)
+        override(ERC721Enumerable, ERC5058)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

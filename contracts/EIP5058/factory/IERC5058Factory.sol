@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-interface IEIP5058Factory {
+interface IERC5058Factory {
     event DeployedBound(address indexed preimage, address bound);
 
     function allBoundsLength() external view returns (uint256);
