@@ -102,9 +102,7 @@ contract MPBV2 is
         _removeSlave(tokenId);
     }
 
-    function removeMaster(uint256 tokenId) external {
-        require(hasRole(UNBIND_ROLE, _msgSender()), "ERC721: not unbind role");
-
+    function removeMaster(uint256 tokenId) external onlyRole(UNBIND_ROLE) {
         _removeMaster(tokenId);
     }
 
