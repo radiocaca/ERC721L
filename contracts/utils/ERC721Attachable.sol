@@ -19,6 +19,8 @@ interface IBoundERC721Receiver {
 
 interface IERC721Burnable {
     function burn(uint256 tokenId) external;
+
+    function removeSlave(uint256 tokenId) external;
 }
 
 // @dev The implementation is to bind the NFT (master) and its airdrop NFT (slave).
@@ -121,6 +123,28 @@ abstract contract ERC721Attachable is Ownable, ERC721 {
         );
 
         _mint(to, tokenId);
+    }
+
+    function _removeSlave(uint256 tokenId) internal virtual {
+        require(isSlaveToken(tokenId), "ERC721Attachable: not slave token");
+
+        BoundToken storage at = slaveTokens[tokenId];
+        require(
+            _checkOnBoundERC721Received(at.collection, address(0), tokenId, at.tokenId, ""),
+            "ERC721Attachable: transfer to non BoundERC721Receiver implementer"
+        );
+
+        delete slaveTokens[tokenId];
+    }
+
+    function _removeMaster(uint256 tokenId) internal virtual {
+        require(allSlaveTokenLength(tokenId) > 0, "ERC721Attachable: no slave token");
+
+        uint256 slaveNum = allSlaveTokenLength(tokenId);
+        for (uint256 i = 0; i < slaveNum; i++) {
+            IERC721Burnable(_masterTokens[tokenId][i].collection).removeSlave(_masterTokens[tokenId][i].tokenId);
+        }
+        delete _masterTokens[tokenId];
     }
 
     /**

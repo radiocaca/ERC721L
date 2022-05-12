@@ -100,4 +100,44 @@ describe("MPB ERC721Attachable contract", function() {
     expect(await AttachableMaster.allSlaveTokenLength(MasterId)).eq(0);
     expect(await AttachableSlave.exists(SlaveId)).eq(false);
   });
+  
+  it("remove slave works", async function() {
+    const MasterId = 0;
+    const SlaveId = 1;
+    await AttachableMaster.addCollection(AttachableSlave.address);
+    await AttachableMaster.mint(owner.address, MasterId);
+    await AttachableSlave.slaveMint(owner.address, SlaveId, AttachableMaster.address, MasterId);
+    
+    await expect(AttachableSlave.transferFrom(owner.address, alice.address, SlaveId)).to.be.revertedWith(
+      "ERC721Attachable: slave token transfer not allowed");
+    
+    await AttachableSlave.removeSlave(SlaveId);
+    
+    expect(await AttachableMaster.allSlaveTokenLength(MasterId)).eq(0);
+    expect(await AttachableSlave.isSlaveToken(SlaveId)).eq(false);
+    await expect(AttachableSlave.masterOf(SlaveId)).to.be.revertedWith(
+      "ERC721Attachable: not slave token");
+    
+    await AttachableSlave.transferFrom(owner.address, alice.address, SlaveId);
+  });
+  
+  it("remove master works", async function() {
+    const MasterId = 0;
+    const SlaveId = 1;
+    await AttachableMaster.addCollection(AttachableSlave.address);
+    await AttachableMaster.mint(owner.address, MasterId);
+    await AttachableSlave.slaveMint(owner.address, SlaveId, AttachableMaster.address, MasterId);
+    
+    await expect(AttachableSlave.transferFrom(owner.address, alice.address, SlaveId)).to.be.revertedWith(
+      "ERC721Attachable: slave token transfer not allowed");
+    
+    await AttachableMaster.removeMaster(MasterId);
+    
+    expect(await AttachableMaster.allSlaveTokenLength(MasterId)).eq(0);
+    expect(await AttachableSlave.isSlaveToken(SlaveId)).eq(false);
+    await expect(AttachableSlave.masterOf(SlaveId)).to.be.revertedWith(
+      "ERC721Attachable: not slave token");
+    
+    await AttachableSlave.transferFrom(owner.address, alice.address, SlaveId);
+  });
 });

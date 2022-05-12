@@ -26,11 +26,13 @@ contract MPBV2 is
 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 public constant UNBIND_ROLE = keccak256("UNBIND_ROLE");
 
     constructor() ERC721("Matrix Plus Box", "MPB") BaseTokenURI("https://api.bakeryswap.org/nft/matrix-plus-box/") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(MINTER_ROLE, _msgSender());
         _grantRole(BURNER_ROLE, _msgSender());
+        _grantRole(UNBIND_ROLE, _msgSender());
     }
 
     function exists(uint256 tokenId) external view returns (bool) {
@@ -92,6 +94,18 @@ contract MPBV2 is
         uint256 hostTokenId
     ) external onlyRole(MINTER_ROLE) {
         _slaveMint(to, tokenId, collection, hostTokenId);
+    }
+
+    function removeSlave(uint256 tokenId) external {
+        require(hasRole(UNBIND_ROLE, _msgSender()) || masterOf(tokenId) == _msgSender(), "ERC721: not unbind role");
+
+        _removeSlave(tokenId);
+    }
+
+    function removeMaster(uint256 tokenId) external {
+        require(hasRole(UNBIND_ROLE, _msgSender()), "ERC721: not unbind role");
+
+        _removeMaster(tokenId);
     }
 
     function transferFrom(
