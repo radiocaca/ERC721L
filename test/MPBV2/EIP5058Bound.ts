@@ -2,12 +2,12 @@ import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MPBV2, ERC721Bound } from "typechain-types";
+import { MatrixPlusBox, ERC721Bound } from "typechain-types";
 
 describe("MPB EIP5058Bound contract", function () {
   let owner: SignerWithAddress;
   let alice: SignerWithAddress;
-  let EIP5058Bound: MPBV2;
+  let EIP5058Bound: MatrixPlusBox;
   let NFTBound : ERC721Bound;
 
   beforeEach(async () => {
@@ -16,7 +16,7 @@ describe("MPB EIP5058Bound contract", function () {
     const FF = await ethers.getContractFactory("ERC5058Factory");
     const Factory = await FF.deploy();
 
-    const EIP5058BoundFactory = await ethers.getContractFactory("MPBV2");
+    const EIP5058BoundFactory = await ethers.getContractFactory("MatrixPlusBox");
 
     EIP5058Bound = await EIP5058BoundFactory.deploy();
     await Factory.boundDeploy(EIP5058Bound.address);

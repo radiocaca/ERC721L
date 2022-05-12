@@ -2,18 +2,18 @@ import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MPBV2 } from "typechain-types";
+import { MatrixPlusBox } from "typechain-types";
 
 describe("MPB ERC721Attachable contract", function() {
   let owner: SignerWithAddress;
   let alice: SignerWithAddress;
-  let AttachableMaster: MPBV2;
-  let AttachableSlave: MPBV2;
+  let AttachableMaster: MatrixPlusBox;
+  let AttachableSlave: MatrixPlusBox;
   
   beforeEach(async () => {
     [owner, alice] = await ethers.getSigners();
     
-    const contract = await ethers.getContractFactory("MPBV2");
+    const contract = await ethers.getContractFactory("MatrixPlusBox");
     AttachableMaster = await contract.deploy();
     
     AttachableSlave = await contract.deploy();
