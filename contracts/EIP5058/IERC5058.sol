@@ -51,7 +51,7 @@ interface IERC5058 is IERC721 {
      *
      * - `from` cannot be the zero address.
      * - `tokenId` token must be owned by `from`.
-     * - `expired` must be greater than block.number
+     * - `expired` must be greater than block.timestamp
      * - If the caller is not `from`, it must be approved to lock this token
      * by either {lockApprove} or {setLockApprovalForAll}.
      *

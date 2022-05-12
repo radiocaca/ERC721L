@@ -72,7 +72,7 @@ abstract contract ERC5058 is ERC721, IERC5058 {
      * @dev See {IERC5058-isLocked}.
      */
     function isLocked(uint256 tokenId) public view virtual override returns (bool) {
-        return lockedTokens[tokenId] > block.number;
+        return lockedTokens[tokenId] > block.timestamp;
     }
 
     /**
@@ -85,7 +85,7 @@ abstract contract ERC5058 is ERC721, IERC5058 {
     ) public virtual override {
         //solhint-disable-next-line max-line-length
         require(_isLockApprovedOrOwner(_msgSender(), tokenId), "ERC5058: lock caller is not owner nor approved");
-        require(expired > block.number, "ERC5058: expired time must be greater than current block number");
+        require(expired > block.timestamp, "ERC5058: expired time must be greater than current block time");
         require(!isLocked(tokenId), "ERC5058: token is locked");
 
         _lock(_msgSender(), from, tokenId, expired);
@@ -149,7 +149,7 @@ abstract contract ERC5058 is ERC721, IERC5058 {
         uint256 expired,
         bytes memory _data
     ) internal virtual {
-        require(expired > block.number, "ERC5058: lock mint for invalid lock block number");
+        require(expired > block.timestamp, "ERC5058: lock mint for invalid lock block time");
 
         _safeMint(to, tokenId, _data);
 

@@ -57,7 +57,7 @@ contract ERC721Basic is
     function proofLockMint(uint256[] calldata proofTokenIds) external {
         uint256 n = _proofMint(proofTokenIds);
         for (uint256 i = 0; i < n; i++) {
-            _safeLockMint(msg.sender, proofPoolBeginTokenId, block.number + lockDuration, "");
+            _safeLockMint(msg.sender, proofPoolBeginTokenId, block.timestamp + lockDuration, "");
             proofPoolBeginTokenId++;
         }
     }

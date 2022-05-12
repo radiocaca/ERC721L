@@ -25,7 +25,9 @@ describe("ERC721Lockable contract", function() {
   it("lockMint works", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058.lockMint(alice.address, NFTId, block + 2);
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await EIP5058.lockMint(alice.address, NFTId, timestamp + 2);
     
     expect(await EIP5058.isLocked(NFTId)).eq(true);
     expect(await EIP5058.lockerOf(NFTId)).eq(owner.address);
@@ -34,7 +36,9 @@ describe("ERC721Lockable contract", function() {
   it("Can not transfer when token is locked", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058.lockMint(owner.address, NFTId, block + 3);
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await EIP5058.lockMint(owner.address, NFTId, timestamp + 3);
     
     // can not transfer when token is locked
     await expect(EIP5058.transferFrom(owner.address, alice.address, NFTId)).to.be.revertedWith(
@@ -50,7 +54,9 @@ describe("ERC721Lockable contract", function() {
   it("isLocked works", async function() {
     const NFTId = 0;
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058.lockMint(owner.address, NFTId, block + 2);
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await EIP5058.lockMint(owner.address, NFTId, timestamp + 2);
     
     // isLocked works
     expect(await EIP5058.isLocked(NFTId)).eq(true);
@@ -61,20 +67,24 @@ describe("ERC721Lockable contract", function() {
   it("lockFrom works", async function() {
     const NFTId = 0;
     let block = await ethers.provider.getBlockNumber();
-    await EIP5058.lockMint(owner.address, NFTId, block + 3);
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await EIP5058.lockMint(owner.address, NFTId, timestamp + 3);
     
-    await expect(EIP5058.lockFrom(owner.address, NFTId, block + 5)).to.be.revertedWith(
+    await expect(EIP5058.lockFrom(owner.address, NFTId, timestamp + 5)).to.be.revertedWith(
       "ERC5058: token is locked",
     );
     
     await ethers.provider.send("evm_mine", []);
-    await EIP5058.lockFrom(owner.address, NFTId, block + 5);
+    await EIP5058.lockFrom(owner.address, NFTId, timestamp + 5);
   });
   
   it("unlockFrom works with lockMint", async function() {
     const NFTId = 0;
-    const block = await ethers.provider.getBlockNumber()
-    await EIP5058.lockMint(owner.address, NFTId, block + 3);
+    const block = await ethers.provider.getBlockNumber();
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await EIP5058.lockMint(owner.address, NFTId, timestamp + 3);
     
     // unlock works
     expect(await EIP5058.isLocked(NFTId)).eq(true);
@@ -87,12 +97,14 @@ describe("ERC721Lockable contract", function() {
     const NFTId = 0;
     
     await EIP5058.mint(owner.address, NFTId);
-
+    
     await expect(EIP5058.unlockFrom(owner.address, NFTId)).to.be.revertedWith(
       "ERC5058: locker query for non-locked token",
     );
     const block = await ethers.provider.getBlockNumber();
-    await EIP5058.lockFrom(owner.address, NFTId, block + 3);
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await EIP5058.lockFrom(owner.address, NFTId, timestamp + 3);
     expect(await EIP5058.isLocked(NFTId)).eq(true);
     await EIP5058.unlockFrom(owner.address, NFTId);
     expect(await EIP5058.isLocked(NFTId)).eq(false);
@@ -101,21 +113,23 @@ describe("ERC721Lockable contract", function() {
   it("lockApprove works", async function() {
     const NFTId = 0;
     await EIP5058.mint(alice.address, NFTId);
-  
+    
     let block = await ethers.provider.getBlockNumber();
-    await expect(EIP5058.lockFrom(owner.address, NFTId, block + 2)).to.be.revertedWith(
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await expect(EIP5058.lockFrom(owner.address, NFTId, timestamp + 2)).to.be.revertedWith(
       "ERC5058: lock caller is not owner nor approved",
     );
     
     await EIP5058.connect(alice).lockApprove(owner.address, NFTId);
     expect(await EIP5058.getLockApproved(NFTId)).eq(owner.address);
-  
-    await expect(EIP5058.lockFrom(owner.address, NFTId, block + 4)).to.be.revertedWith(
+    
+    await expect(EIP5058.lockFrom(owner.address, NFTId, timestamp + 4)).to.be.revertedWith(
       "ERC5058: lock from incorrect owner",
     );
-    await EIP5058.lockFrom(alice.address, NFTId, block + 6);
+    await EIP5058.lockFrom(alice.address, NFTId, timestamp + 6);
     expect(await EIP5058.isLocked(NFTId)).eq(true);
-  
+    
     await expect(EIP5058.lockApprove(alice.address, NFTId)).to.be.revertedWith(
       "ERC5058: token is locked",
     );
@@ -123,18 +137,20 @@ describe("ERC721Lockable contract", function() {
   
   it("setLockApproveForAll works", async function() {
     const NFTId = 0;
-  
+    
     await EIP5058.mint(alice.address, NFTId);
     const block = await ethers.provider.getBlockNumber();
-    await expect(EIP5058.lockFrom(alice.address, NFTId, block + 2)).to.be.revertedWith(
+    const blockBefore = await ethers.provider.getBlock(block);
+    const timestamp = blockBefore.timestamp;
+    await expect(EIP5058.lockFrom(alice.address, NFTId, timestamp + 2)).to.be.revertedWith(
       "ERC5058: lock caller is not owner nor approved",
     );
-
+    
     await EIP5058.connect(alice).setLockApprovalForAll(owner.address, true);
     expect(await EIP5058.isLockApprovedForAll(alice.address, owner.address)).eq(true);
-
-    await EIP5058.lockFrom(alice.address, NFTId, block + 6);
-
+    
+    await EIP5058.lockFrom(alice.address, NFTId, timestamp + 6);
+    
     await EIP5058.connect(alice).setLockApprovalForAll(owner.address, false);
     expect(await EIP5058.isLockApprovedForAll(alice.address, owner.address)).eq(false);
   });
